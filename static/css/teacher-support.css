@@ -1,0 +1,13 @@
+/* Shared management support two-column frame for Writing & Speaking. */
+.teacher-support-layout{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:18px;align-items:start}
+.teacher-support-list,.teacher-support-editor{background:#fff;border:1px solid #e3e8f0;border-radius:14px;box-shadow:0 2px 6px rgba(20,35,60,.03);min-width:0}
+.teacher-support-list{overflow-y:auto;max-height:calc(100dvh - 170px);position:sticky;top:102px}
+.teacher-support-editor{overflow:hidden;padding:23px}
+.teacher-support-editor input,.teacher-support-editor select,.teacher-support-editor textarea{max-width:100%;font:inherit}
+.teacher-support-editor .form-control,.teacher-support-editor .form-select{width:100%;border:1px solid #dae1ea;border-radius:9px;padding:10px 12px;background:white}
+.teacher-support-editor textarea{min-height:100px;line-height:1.55}
+.teacher-support-editor label{font-weight:650}
+.teacher-support-editor .tab-bar{display:flex;flex-wrap:wrap}
+@media(max-width:960px){.teacher-support-layout{grid-template-columns:1fr}.teacher-support-list{position:static;max-height:350px}.teacher-support-editor{padding:17px}}
+.teacher-progress-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:18px}.teacher-progress-grid section{min-width:0}.teacher-progress-grid p{line-height:1.6;border-top:1px solid #e8edf3;padding:9px 0}.teacher-progress-table{width:100%;border-collapse:collapse}.teacher-progress-table td,.teacher-progress-table th{border-bottom:1px solid #e7eaf0;padding:11px;text-align:left}.teacher-progress-table td>div{font-size:12px;color:#76849a}
+@media(max-width:800px){.teacher-progress-grid{grid-template-columns:1fr}}

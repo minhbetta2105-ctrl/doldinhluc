@@ -1,0 +1,15 @@
+{% extends 'management/base_admin.html' %}
+{% block title %}Câu hỏi {{ skill_label }} | DOL IELTS{% endblock %}
+{% block teacher_heading %}Câu hỏi · {{ skill_label }}{% endblock %}
+{% block management_content %}
+<div class="teacher-data-card"><div class="teacher-toolbar-row"><div><h2>{{ exercise.title }}</h2><p>Quản lý câu hỏi và phương án, lưu trực tiếp vào các bảng receptive.Question và receptive.Option đang có.</p></div>
+{% if skill == 'READING' %}{% if perms.receptive.change_exercise or perms.reading.change_readingexercise or user.is_superuser %}<a class="teacher-action" href="{% url 'management:reading_question_create' exercise.pk %}">+ Thêm câu hỏi</a>{% endif %}
+{% else %}{% if perms.receptive.change_exercise or perms.listening.change_listeningexercise or user.is_superuser %}<a class="teacher-action" href="{% url 'management:listening_question_create' exercise.pk %}">+ Thêm câu hỏi</a>{% endif %}{% endif %}
+</div></div>
+{% for question in questions %}<div class="teacher-data-card"><div class="teacher-toolbar-row"><h2>Câu {{ question.order_no }} · {{ question.get_question_type_display }}</h2><span class="teacher-badge {% if question.status == 'PUBLISHED' %}published{% endif %}">{{ question.status }}</span></div><p>{{ question.question_text }}</p><p style="color:#64748b;font-size:.8rem">Đáp án chuẩn (JSON): {{ question.correct_answers }}</p><div class="teacher-form-row">
+{% if user.is_superuser or perms.receptive.change_exercise or perms.reading.change_readingexercise or perms.listening.change_listeningexercise %}
+{% if skill == 'READING' %}<a href="{% url 'management:reading_question_edit' exercise.pk question.pk %}">Sửa câu hỏi</a><a href="{% url 'management:reading_option_create' exercise.pk question.pk %}">+ Thêm phương án</a>{% else %}<a href="{% url 'management:listening_question_edit' exercise.pk question.pk %}">Sửa câu hỏi</a><a href="{% url 'management:listening_option_create' exercise.pk question.pk %}">+ Thêm phương án</a>{% endif %}{% endif %}</div>
+{% if question.options.all %}<div class="teacher-scroll"><table class="teacher-table"><tbody>{% for option in question.options.all %}<tr><td>{{ option.option_key }} — {{ option.option_text }}</td><td>{% if skill == 'READING' %}<a href="{% url 'management:reading_option_edit' exercise.pk question.pk option.pk %}">Sửa</a>{% else %}<a href="{% url 'management:listening_option_edit' exercise.pk question.pk option.pk %}">Sửa</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}</div>
+{% empty %}<div class="teacher-data-card">Chưa có câu hỏi cho đề này.</div>{% endfor %}
+<p><a class="teacher-action secondary" href="{% if skill == 'READING' %}{% url 'management:reading_exercise_list' %}{% else %}{% url 'management:listening_exercise_list' %}{% endif %}">← Danh sách đề</a></p>
+{% endblock %}

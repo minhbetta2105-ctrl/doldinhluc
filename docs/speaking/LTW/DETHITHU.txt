@@ -1,0 +1,611 @@
+================================================================================
+CẨM NANG HƯỚNG DẪN THỰC HÀNH TỔNG HỢP & MÃ NGUỒN HOÀN CHỈNH
+HỌC PHẦN: LẬP TRÌNH WEB (MIS3010) – ĐỀ THI GIỮA KỲ MÃ 622
+DỰ ÁN: QUẢN LÝ KHÓA ĐÀO TẠO NGẮN HẠN (TrainingManagement)
+================================================================================
+
+PHẦN I. QUY TRÌNH THỰC HIỆN TỪNG BƯỚC TỪ CON SỐ 0
+
+1. KHỞI TẠO DỰ ÁN VÀ CÀI ĐẶT MÔI TRƯỜNG
+--------------------------------------------------------------------------------
+Bước 1.1: Khởi động PyCharm
+- Mở PyCharm -> Chọn New Project.
+- Mục Location: Chọn đường dẫn lưu bài thi (ví dụ: D:\ThiGiuaKy_622).
+- Mục Python Interpreter: Chọn New Virtualenv environment (hoặc chọn sẵn Python Interpreter có trong máy phòng thi).
+- Bấm Create.
+
+Bước 1.2: Cài đặt và kiểm tra Django trên Terminal
+- Mở cửa sổ Terminal trong PyCharm (ở thanh đáy màn hình) và chạy:
+    python --version
+    python -m pip install Django==4.2.8
+    python -m django --version
+
+Bước 1.3: Tạo Project và App
+- Chạy lần lượt 3 lệnh:
+    django-admin startproject TrainingManagement
+    cd TrainingManagement
+    python manage.py startapp training
+
+- Đánh dấu thư mục gốc (Khắc phục lỗi Unresolved Reference):
+    Nhấp chuột phải vào thư mục TrainingManagement (thư mục chứa file manage.py) -> Chọn "Mark Directory as" -> Chọn "Sources Root".
+
+
+2. CẤU TRÚC THƯ MỤC CHUẨN CẦN ĐẠT ĐƯỢC
+--------------------------------------------------------------------------------
+TrainingManagement/
+│
+├── manage.py
+├── db.sqlite3
+│
+├── TrainingManagement/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+│
+└── training/
+    ├── migrations/
+    ├── templates/
+    │   └── training/
+    │       ├── base.html
+    │       ├── enroll.html
+    │       └── report.html
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── forms.py
+    ├── models.py
+    ├── urls.py
+    └── views.py
+
+
+================================================================================
+PHẦN II. MÃ NGUỒN CHI TIẾT TỪNG FILE
+================================================================================
+
+1. FILE: TrainingManagement/settings.py
+--------------------------------------------------------------------------------
+Tìm danh sách INSTALLED_APPS và khai báo app 'training':
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'training',
+]
+
+
+2. FILE: training/models.py
+--------------------------------------------------------------------------------
+Xây dựng 4 bảng theo đúng yêu cầu đề bài:
+
+from django.db import models
+
+
+class Course(models.Model):
+    name = models.CharField(max_length=200, blank=False)
+    start_date = models.DateField()
+    venue = models.CharField(max_length=150)
+    max_students = models.IntegerField()
+
+    def __str__(self):
+        return self.name
+
+
+class Instructor(models.Model):
+    full_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    expertise = models.CharField(max_length=150)
+
+    def __str__(self):
+        return self.full_name
+
+
+class Lesson(models.Model):
+    title = models.CharField(max_length=200)
+    duration = models.IntegerField()
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="lessons"
+    )
+    instructors = models.ManyToManyField(
+        Instructor,
+        related_name="lessons"
+    )
+
+    def __str__(self):
+        return self.title
+
+
+class Enrollment(models.Model):
+    student_name = models.CharField(max_length=100)
+    student_email = models.EmailField()
+    enrolled_date = models.DateField()
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+
+    def __str__(self):
+        return f"{self.student_name} - {self.course.name}"
+
+
+3. THỰC HIỆN MIGRATION VÀ NẠP DỮ LIỆU BAN ĐẦU
+--------------------------------------------------------------------------------
+Chạy trong Terminal:
+    python manage.py makemigrations
+    python manage.py migrate
+
+Nạp nhanh dữ liệu 5 bản ghi mỗi bảng bằng Django Shell:
+    python manage.py shell
+
+Dán đoạn mã sau vào Shell rồi nhấn Enter:
+--------------------------------------------------------------------------------
+from datetime import date
+from training.models import Course, Instructor, Lesson, Enrollment
+
+c_names = ["Lập trình Python", "Thiết kế Web Django", "Phân tích dữ liệu", "Trí tuệ nhân tạo", "Quản trị CSDL"]
+venues = ["Phòng A101", "Phòng A102", "Phòng B201", "Phòng B202", "Phòng C301"]
+courses = []
+for i in range(5):
+    c = Course.objects.create(
+        name=c_names[i],
+        start_date=date(2027, 1, 10 + i),
+        venue=venues[i],
+        max_students=15 + i
+    )
+    courses.append(c)
+
+i_names = ["Nguyễn Văn An", "Trần Minh Bình", "Lê Hoàng Nam", "Phạm Quốc Huy", "Võ Thanh Hà"]
+specs = ["Python", "Django Web", "Data Science", "AI", "SQL"]
+instructors = []
+for i in range(5):
+    ins = Instructor.objects.create(
+        full_name=i_names[i],
+        email=f"gv{i+1}@due.edu.vn",
+        expertise=specs[i]
+    )
+    instructors.append(ins)
+
+for i in range(5):
+    les = Lesson.objects.create(
+        title=f"Buổi học chuyên đề số {i+1}",
+        duration=90 + i * 15,
+        course=courses[i]
+    )
+    les.instructors.add(instructors[i])
+
+for i in range(5):
+    Enrollment.objects.create(
+        student_name=f"Học viên Nguyễn Văn {i+1}",
+        student_email=f"hocvien{i+1}@gmail.com",
+        enrolled_date=date(2026, 10, 1 + i),
+        course=courses[i]
+    )
+
+exit()
+--------------------------------------------------------------------------------
+
+
+4. FILE: training/admin.py
+--------------------------------------------------------------------------------
+Tạo tài khoản superuser trên Terminal:
+    python manage.py createsuperuser
+    (User: admin, Mật khẩu: admin12345)
+
+Nội dung file training/admin.py:
+
+from django.contrib import admin
+from .models import Course, Instructor, Lesson, Enrollment
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "start_date",
+        "venue",
+        "max_students",
+        "enrolled_student_count",
+    )
+    search_fields = ("name",)
+    list_filter = ("start_date",)
+    ordering = ("-start_date",)
+
+    def enrolled_student_count(self, obj):
+        return obj.enrollments.count()
+
+    enrolled_student_count.short_description = "Số học viên đã đăng ký"
+
+
+admin.site.register(Instructor)
+admin.site.register(Lesson)
+admin.site.register(Enrollment)
+
+
+5. FILE: training/forms.py
+--------------------------------------------------------------------------------
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from .models import Enrollment
+
+
+class CourseEnrollmentForm(forms.ModelForm):
+    confirm_information = forms.BooleanField(
+        required=True,
+        label="Xác nhận thông tin",
+        error_messages={
+            "required": "Bạn phải tích chọn xác nhận thông tin trước khi đăng ký."
+        }
+    )
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "student_name",
+            "student_email",
+            "course",
+        ]
+        labels = {
+            "student_name": "Họ tên học viên",
+            "student_email": "Email học viên",
+            "course": "Khóa đào tạo",
+        }
+
+    def clean_student_name(self):
+        name = self.cleaned_data.get("student_name", "").strip()
+        if len(name) < 4:
+            raise ValidationError("Họ tên học viên phải có ít nhất 4 ký tự.")
+        return name
+
+    def clean(self):
+        cleaned_data = super().clean()
+        course = cleaned_data.get("course")
+        student_email = cleaned_data.get("student_email")
+
+        if course:
+            today = timezone.now().date()
+
+            # Không cho đăng ký khóa học đã khai giảng
+            if course.start_date <= today:
+                raise ValidationError("Không thể đăng ký vì khóa đào tạo này đã khai giảng.")
+
+            # Không cho đăng ký khi số học viên đã đạt max_students
+            if course.enrollments.count() >= course.max_students:
+                raise ValidationError("Khóa đào tạo này đã đạt số lượng học viên tối đa.")
+
+            # Không cho phép cùng một email đăng ký trùng một khóa đào tạo
+            if student_email:
+                trung_email = Enrollment.objects.filter(
+                    course=course,
+                    student_email__iexact=student_email
+                ).exists()
+
+                if trung_email:
+                    raise ValidationError("Email này đã đăng ký khóa đào tạo này rồi.")
+
+        return cleaned_data
+
+
+6. FILE: training/views.py
+--------------------------------------------------------------------------------
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+from .models import Course, Instructor
+from .forms import CourseEnrollmentForm
+
+
+def enroll_view(request):
+    if request.method == "POST":
+        form = CourseEnrollmentForm(request.POST)
+        if form.is_valid():
+            enrollment = form.save(commit=False)
+            enrollment.enrolled_date = timezone.now().date()
+            enrollment.save()
+
+            messages.success(
+                request,
+                f"Đã đăng ký khóa học thành công cho học viên {enrollment.student_name}!"
+            )
+            return redirect("enroll")
+    else:
+        form = CourseEnrollmentForm()
+
+    context = {
+        "form": form
+    }
+    return render(request, "training/enroll.html", context)
+
+
+def course_report(request):
+    courses = Course.objects.all().order_by("start_date")
+
+    tu_ngay = request.GET.get("tu_ngay", "").strip()
+    den_ngay = request.GET.get("den_ngay", "").strip()
+    chuyen_mon = request.GET.get("chuyen_mon", "").strip()
+
+    if tu_ngay:
+        courses = courses.filter(start_date__gte=tu_ngay)
+
+    if den_ngay:
+        courses = courses.filter(start_date__lte=den_ngay)
+
+    if chuyen_mon:
+        courses = courses.filter(
+            lessons__instructors__expertise__icontains=chuyen_mon
+        ).distinct()
+
+    danh_sach_ket_qua = []
+    tong_luot_dang_ky = 0
+
+    for course in courses:
+        ds_giang_vien = Instructor.objects.filter(
+            lessons__course=course
+        ).distinct()
+
+        so_hoc_vien = course.enrollments.count()
+        tong_luot_dang_ky += so_hoc_vien
+
+        danh_sach_ket_qua.append({
+            "course": course,
+            "instructors": ds_giang_vien,
+            "student_count": so_hoc_vien,
+        })
+
+    context = {
+        "danh_sach_ket_qua": danh_sach_ket_qua,
+        "tong_khoa_hoc": len(danh_sach_ket_qua),
+        "tong_luot_dang_ky": tong_luot_dang_ky,
+        "tu_ngay": tu_ngay,
+        "den_ngay": den_ngay,
+        "chuyen_mon": chuyen_mon,
+    }
+    return render(request, "training/report.html", context)
+
+
+7. FILE: training/urls.py
+--------------------------------------------------------------------------------
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.enroll_view, name="enroll"),
+    path("enroll/", views.enroll_view, name="enroll_page"),
+    path("courses/report/", views.course_report, name="course_report"),
+]
+
+
+8. FILE: TrainingManagement/urls.py
+--------------------------------------------------------------------------------
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("training.urls")),
+]
+
+
+9. FILE: training/templates/training/base.html
+--------------------------------------------------------------------------------
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Quản lý Khóa đào tạo{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f6fa;
+        }
+        header {
+            background: #234a70;
+            padding: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        main {
+            padding: 30px;
+            max-width: 1000px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #e8eef5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #234a70;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .message {
+            padding: 12px;
+            background: #e2f5e9;
+            color: #155724;
+            margin-bottom: 15px;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+        }
+        .errorlist {
+            color: red;
+            font-weight: bold;
+            list-style: none;
+            padding-left: 0;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>Short Course Management System</h2>
+        <nav>
+            <a href="{% url 'enroll' %}">Đăng ký khóa học</a>
+            <a href="{% url 'course_report' %}">Báo cáo khóa học</a>
+            <a href="/admin/">Quản trị Admin</a>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        © 2026 Training Management App - MIS3010
+    </footer>
+</body>
+</html>
+
+
+10. FILE: training/templates/training/enroll.html
+--------------------------------------------------------------------------------
+{% extends "training/base.html" %}
+
+{% block title %}Đăng ký khóa đào tạo{% endblock %}
+
+{% block content %}
+<h1>ĐĂNG KÝ KHÓA ĐÀO TẠO</h1>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn">Đăng ký</button>
+</form>
+{% endblock %}
+
+
+11. FILE: training/templates/training/report.html
+--------------------------------------------------------------------------------
+{% extends "training/base.html" %}
+
+{% block title %}Báo cáo Khóa đào tạo{% endblock %}
+
+{% block content %}
+<h1>DANH SÁCH KHÓA ĐÀO TẠO THEO ĐIỀU KIỆN</h1>
+
+<form method="get" style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+    <label>Từ ngày:</label>
+    <input type="date" name="tu_ngay" value="{{ tu_ngay }}">
+
+    <label style="margin-left: 15px;">Đến ngày:</label>
+    <input type="date" name="den_ngay" value="{{ den_ngay }}">
+
+    <label style="margin-left: 15px;">Lĩnh vực chuyên môn:</label>
+    <input type="text" name="chuyen_mon" value="{{ chuyen_mon }}" placeholder="Không bắt buộc">
+
+    <button type="submit" class="btn" style="margin-left: 10px;">Lọc dữ liệu</button>
+</form>
+
+{% if danh_sach_ket_qua %}
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên khóa đào tạo</th>
+                <th>Ngày khai giảng</th>
+                <th>Địa điểm</th>
+                <th>Danh sách giảng viên</th>
+                <th>Số học viên đăng ký</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in danh_sach_ket_qua %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.course.name }}</td>
+                <td>{{ item.course.start_date|date:"d/m/Y" }}</td>
+                <td>{{ item.course.venue }}</td>
+                <td>
+                    {% for gv in item.instructors %}
+                        {{ gv.full_name }} ({{ gv.expertise }}){% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        Chưa có giảng viên
+                    {% endfor %}
+                </td>
+                <td>{{ item.student_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; font-weight: bold; background: #eef3f8; padding: 12px; border-radius: 4px;">
+        <p style="margin: 5px 0;">Tổng số khóa đào tạo: {{ tong_khoa_hoc }}</p>
+        <p style="margin: 5px 0;">Tổng số lượt đăng ký: {{ tong_luot_dang_ky }}</p>
+    </div>
+{% else %}
+    <p><strong>Không có khóa đào tạo nào.</strong></p>
+{% endif %}
+
+{% endblock %}
+
+
+================================================================================
+PHẦN III. QUY CÁCH KIỂM THỬ VÀ ĐÓNG GÓI BÀI THI
+================================================================================
+
+1. KIỂM THỬ TRƯỚC KHI NỘP:
+- Chạy lệnh: python manage.py runserver
+- Kiểm tra trang Admin: http://127.0.0.1:8000/admin/
+  -> Đăng nhập user `admin`, kiểm tra CourseAdmin có cột "Số học viên đã đăng ký" và bộ lọc theo ngày khai giảng.
+- Kiểm tra trang Đăng ký: http://127.0.0.1:8000/
+  -> Nhập họ tên dưới 4 ký tự -> Kiểm tra form có báo lỗi đỏ không.
+  -> Đăng ký hợp lệ -> Kiểm tra thông báo thành công xanh.
+- Kiểm tra trang Báo cáo: http://127.0.0.1:8000/courses/report/
+  -> Lọc khoảng ngày và chuyên môn -> Kiểm tra bảng hiển thị đúng giảng viên, sĩ số và 2 dòng tổng cuối bảng.
+
+2. CHỤP ẢNH MINH CHỨNG:
+- Chụp ảnh màn hình CourseAdmin có đầy đủ dữ liệu.
+- Chụp ảnh màn hình trang Đăng ký thành công & trang Đăng ký báo lỗi.
+- Chụp ảnh màn hình trang Báo cáo có kết quả và trang Báo cáo khi lọc ra rỗng.
+- Lưu tất cả ảnh vào 1 thư mục tên `screenshots` bên trong dự án.
+
+3. ĐÓNG GÓI TẬP TIN:
+- Nén toàn bộ thư mục bài làm (chứa file `manage.py`, file `db.sqlite3`, thư mục `training`, thư mục `TrainingManagement` và thư mục ảnh) thành 1 file ZIP.
+- Đặt tên file ZIP theo đúng cú pháp đề yêu cầu:
+  GK-622-<Mã sinh viên>-<Họ và tên>-<Lớp>.zip
+  (Ví dụ: GK-622-241121006515-Hoang Van Hung-50K22.1.zip)
+================================================================================

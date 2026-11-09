@@ -1,0 +1,172 @@
+{% extends "management/base_admin.html" %}
+
+{% block title %}
+    {% if selected_exercise %}Quản lý tài liệu hỗ trợ: {{ selected_exercise.title }}{% else %}Quản lý nội dung hỗ trợ Speaking{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-bar">
+    <a href="{% url 'management:dashboard' %}">Quản trị</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <a href="{% url 'management:speaking_exercise_list' %}">Đề Speaking</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">Nội dung hỗ trợ</span>
+</div>
+{% endblock %}
+
+{% block management_content %}
+<div style="margin-bottom: 24px;">
+    <h1 style="color: var(--dol-gray-900); font-size: 1.5rem; margin-bottom: 4px;">
+        Quản lý nội dung hỗ trợ Speaking
+    </h1>
+    <p style="color: var(--dol-gray-600); font-size: 0.875rem;">
+        Biên tập gợi ý ý tưởng, bài mẫu tham khảo, từ vựng gợi ý và tệp âm thanh mẫu cho từng bài Speaking.
+    </p>
+</div>
+
+{% if not selected_exercise %}
+    <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 48px; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">🎙️</div>
+        <h3 style="color: var(--dol-gray-900); margin-bottom: 8px;">Chưa có đề Speaking nào trong hệ thống</h3>
+        <p style="color: var(--dol-gray-600); font-size: 0.9rem; margin-bottom: 20px;">
+            Vui lòng tạo ít nhất một đề Speaking trước khi biên tập nội dung hỗ trợ.
+        </p>
+        <a href="{% url 'management:speaking_exercise_create' %}" class="btn btn-primary">
+            ➕ Thêm đề Speaking mới
+        </a>
+    </div>
+{% else %}
+    <div class="support-layout teacher-support-layout">
+
+        <!-- CỘT TRÁI: DANH SÁCH BÀI SPEAKING ĐỂ CHỌN -->
+        <div class="task-list-panel teacher-support-list">
+            <div style="margin-bottom: 14px;">
+                <form method="get" action="" style="display: flex; gap: 6px;">
+                    <input type="text" name="q" value="{{ search_q }}" placeholder="Tìm đề Speaking..." style="flex: 1; padding: 7px 10px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.8rem;">
+                    <button type="submit" class="btn btn-secondary btn-sm" style="padding: 7px 12px;">
+                        🔍
+                    </button>
+                </form>
+            </div>
+
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase; margin-bottom: 8px;">
+                Chọn đề để sửa tài liệu hỗ trợ:
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                {% for p in exercises %}
+                    <a href="{% url 'management:speaking_support_manage' p.id %}" style="display: block; padding: 10px 12px; border-radius: var(--radius-md); text-decoration: none; border: 1px solid {% if p.id == selected_exercise.id %}var(--dol-red){% else %}var(--dol-gray-200){% endif %}; background-color: {% if p.id == selected_exercise.id %}var(--dol-red-light){% else %}var(--dol-white){% endif %}; transition: all 0.15s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--dol-gray-600);">#{{ p.id }} &middot; {{ p.get_part_display }}</span>
+                            <span style="font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; font-weight: 700; {% if p.status == 'PUBLISHED' %}background-color: var(--dol-green-light); color: var(--dol-green);{% else %}background-color: var(--dol-gray-200); color: var(--dol-gray-600);{% endif %}">
+                                {{ p.status }}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: {% if p.id == selected_exercise.id %}var(--dol-red){% else %}var(--dol-gray-900){% endif %}; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ p.title }}
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: FORM BIÊN TẬP NỘI DUNG HỖ TRỢ -->
+        <div class="editor-panel teacher-support-editor">
+            <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--dol-gray-200);">
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                    <span class="badge" style="background-color: #EBF8FF; color: #2B6CB0; border: 1px solid #BEE3F8;">{{ selected_exercise.get_part_display }}</span>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-red); text-transform: uppercase;">
+                        Chủ đề: {{ selected_exercise.topic }}
+                    </span>
+                </div>
+                <h2 style="color: var(--dol-gray-900); font-size: 1.25rem;">
+                    Nội dung hỗ trợ: {{ selected_exercise.title }}
+                </h2>
+            </div>
+
+            <form method="post" action="" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Tệp âm thanh bài mẫu -->
+                <div style="margin-bottom: 22px; background-color: var(--dol-blue-light); border: 1px solid #BEE3F8; border-radius: var(--radius-md); padding: 16px;">
+                    <label for="{{ form.sample_audio_file.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-blue); margin-bottom: 6px;">
+                        🎧 {{ form.sample_audio_file.label }}
+                    </label>
+                    {% if support and support.sample_audio_file %}
+                        <div style="margin-bottom: 10px;">
+                            <span style="font-size: 0.75rem; color: var(--dol-gray-700); display: block; margin-bottom: 4px;">Audio hiện tại:</span>
+                            <audio controls src="{{ support.sample_audio_file.url }}" style="width: 100%; height: 36px;"></audio>
+                        </div>
+                    {% endif %}
+                    {{ form.sample_audio_file }}
+                    {% if form.sample_audio_file.errors %}
+                        <div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.sample_audio_file.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Gợi ý ý tưởng -->
+                <div style="margin-bottom: 20px;">
+                    <label for="{{ form.idea_hint.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                        💡 {{ form.idea_hint.label }}
+                    </label>
+                    {{ form.idea_hint }}
+                    {% if form.idea_hint.errors %}
+                        <div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.idea_hint.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Bài mẫu tham khảo -->
+                <div style="margin-bottom: 20px;">
+                    <label for="{{ form.sample_answer.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                        📄 {{ form.sample_answer.label }}
+                    </label>
+                    {{ form.sample_answer }}
+                    {% if form.sample_answer.errors %}
+                        <div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.sample_answer.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Từ vựng gợi ý -->
+                <div style="margin-bottom: 24px;">
+                    <label for="{{ form.suggested_vocabulary.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                        📖 {{ form.suggested_vocabulary.label }}
+                    </label>
+                    {{ form.suggested_vocabulary }}
+                    {% if form.suggested_vocabulary.errors %}
+                        <div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.suggested_vocabulary.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--dol-gray-200); padding-top: 20px;">
+                    <a href="{% url 'management:speaking_exercise_detail' selected_exercise.id %}" class="btn btn-secondary">
+                        Xem chi tiết đề
+                    </a>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                        💾 Lưu nội dung hỗ trợ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--dol-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.form-control:focus {
+    border-color: var(--dol-red);
+    box-shadow: 0 0 0 3px rgba(229, 29, 36, 0.1);
+}
+</style>
+{% endblock %}

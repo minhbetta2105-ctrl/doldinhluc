@@ -1,0 +1,182 @@
+{% extends "management/base_admin.html" %}
+
+{% block title %}Quản lý Đánh giá / Góp ý (Feedback){% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-bar">
+    <a href="{% url 'management:writing_prompt_list' %}">Quản trị</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">Danh sách Đánh giá & Góp ý</span>
+</div>
+{% endblock %}
+
+{% block management_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h1 style="color: var(--dol-gray-900); font-size: 1.5rem; margin-bottom: 4px;">
+            Quản lý Đánh giá & Góp ý của Học viên
+        </h1>
+        <p style="color: var(--dol-gray-600); font-size: 0.875rem;">
+            Theo dõi, ẩn/hiện hoặc quản lý các ý kiến đóng góp về trải nghiệm sử dụng website.
+        </p>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); padding: 8px 14px; border-radius: var(--radius-md); font-size: 0.85rem;">
+            Tổng số: <strong>{{ total_count }}</strong> (Hiện: <strong style="color: var(--dol-green);">{{ visible_count }}</strong>, Ẩn: <strong style="color: var(--dol-red);">{{ hidden_count }}</strong>)
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc và tìm kiếm -->
+<div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
+    <form method="get" action="{% url 'feedback:feedback_list' %}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 240px;">
+            <input type="text" name="q" value="{{ search_q }}" placeholder="Tìm kiếm theo tên học viên hoặc nội dung góp ý..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.875rem;">
+        </div>
+
+        <div>
+            <select name="status" style="padding: 8px 12px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.875rem;">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="VISIBLE" {% if status_filter == 'VISIBLE' %}selected{% endif %}>Đang hiển thị (VISIBLE)</option>
+                <option value="HIDDEN" {% if status_filter == 'HIDDEN' %}selected{% endif %}>Đã ẩn (HIDDEN)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">
+            🔍 Tìm kiếm
+        </button>
+
+        {% if status_filter or search_q %}
+            <a href="{% url 'feedback:feedback_list' %}" class="btn btn-secondary" style="padding: 8px 14px;">
+                ✕ Đặt lại
+            </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Bảng danh sách Feedback -->
+<div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);">
+    {% if feedbacks %}
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+            <thead>
+                <tr style="background-color: var(--dol-gray-100); border-bottom: 2px solid var(--dol-gray-300); text-align: left;">
+                    <th style="padding: 12px 16px; width: 70px;">ID</th>
+                    <th style="padding: 12px 16px; width: 180px;">Học viên</th>
+                    <th style="padding: 12px 16px;">Nội dung phản hồi</th>
+                    <th style="padding: 12px 16px; width: 160px;">Thời gian gửi</th>
+                    <th style="padding: 12px 16px; width: 120px; text-align: center;">Trạng thái</th>
+                    <th style="padding: 12px 16px; width: 180px; text-align: right;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in feedbacks %}
+                    <tr style="border-bottom: 1px solid var(--dol-gray-200); {% if item.status == 'HIDDEN' %}background-color: #FAFAFA; opacity: 0.85;{% endif %}">
+                        <td style="padding: 14px 16px; font-weight: 700; color: var(--dol-gray-600);">#{{ item.id }}</td>
+                        <td style="padding: 14px 16px;">
+                            <div style="font-weight: 600; color: var(--dol-gray-900);">
+                                {{ item.user.get_full_name|default:item.user.username }}
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--dol-gray-500);">@{{ item.user.username }}</span>
+                        </td>
+                        <td style="padding: 14px 16px; line-height: 1.5; color: var(--dol-charcoal);">
+                            {{ item.content }}
+                        </td>
+                        <td style="padding: 14px 16px; font-size: 0.8rem; color: var(--dol-gray-600);">
+                            {{ item.created_at|date:"H:i - d/m/Y" }}
+                        </td>
+                        <td style="padding: 14px 16px; text-align: center;">
+                            {% if item.status == 'VISIBLE' %}
+                                <span class="badge" style="background-color: var(--dol-green-light); color: var(--dol-green); border: 1px solid #C6F6D5;">
+                                    HIỂN THỊ
+                                </span>
+                            {% else %}
+                                <span class="badge" style="background-color: var(--dol-gray-200); color: var(--dol-gray-600); border: 1px solid var(--dol-gray-300);">
+                                    ĐÃ ẨN
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px 16px; text-align: right;">
+                            <div style="display: inline-flex; gap: 6px;">
+                                <!-- Toggle Ẩn / Hiện -->
+                                <form method="post" action="{% url 'feedback:feedback_status_toggle' item.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    {% if item.status == 'VISIBLE' %}
+                                        <button type="submit" class="btn btn-sm btn-secondary" title="Ẩn phản hồi này">
+                                            👁️ Ẩn
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Hiển thị lại">
+                                            ✓ Hiện
+                                        </button>
+                                    {% endif %}
+                                </form>
+
+                                <!-- Nút Xóa có xác nhận -->
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete-feedback" data-id="{{ item.id }}" data-user="{{ item.user.username }}">
+                                    🗑️ Xóa
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--dol-gray-600);">
+            <div style="font-size: 2rem; margin-bottom: 8px;">📬</div>
+            Chưa có phản hồi nào phù hợp với bộ lọc tìm kiếm.
+        </div>
+    {% endif %}
+</div>
+
+<!-- MODAL XÁC NHẬN XÓA PHẢN HỒI -->
+<div id="delete-feedback-modal" style="display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background-color: var(--dol-white); border-radius: var(--radius-lg); max-width: 440px; width: 100%; padding: 24px; box-shadow: var(--shadow-xl);">
+        <h3 style="color: var(--dol-red); font-size: 1.15rem; margin-bottom: 10px;">
+            ⚠️ Xác nhận xóa phản hồi
+        </h3>
+        <p style="color: var(--dol-gray-700); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+            Bạn có chắc chắn muốn xóa vĩnh viễn phản hồi <strong id="modal-feedback-label">#</strong> không? Hành động này không thể hoàn tác. Nếu muốn giữ dữ liệu, bạn nên sử dụng tính năng <strong>Ẩn</strong> thay vì Xóa.
+        </p>
+
+        <form id="delete-feedback-form" method="post" action="">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" id="btn-cancel-delete" class="btn btn-secondary">
+                    Hủy bỏ
+                </button>
+                <button type="submit" class="btn btn-primary" style="background-color: var(--dol-red);">
+                    Xác nhận xóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("delete-feedback-modal");
+    const modalLabel = document.getElementById("modal-feedback-label");
+    const deleteForm = document.getElementById("delete-feedback-form");
+    const btnCancel = document.getElementById("btn-cancel-delete");
+
+    document.querySelectorAll(".btn-delete-feedback").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const fid = this.getAttribute("data-id");
+            const fuser = this.getAttribute("data-user");
+            modalLabel.textContent = "#" + fid + " (của @" + fuser + ")";
+            deleteForm.action = "/feedback/" + fid + "/delete/";
+            modal.style.display = "flex";
+        });
+    });
+
+    btnCancel.addEventListener("click", function () {
+        modal.style.display = "none";
+        deleteForm.action = "";
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% load static accounts_tags %}
+<header class="header site-global-header">
+ <div class="header-inner">
+  <a class="brand-logo" href="{% url 'home' %}" aria-label="DOL IELTS Đình Lực - Trang chủ"><img src="{% static 'images/dol_brand_header.png' %}" alt="DOL IELTS Đình Lực"></a>
+  <button class="mobile-nav-toggle" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="global-navigation"><span></span><span></span><span></span></button>
+  <nav class="global-nav" id="global-navigation" aria-label="Điều hướng chính">
+   <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+   {% if user|is_hoc_vien %}
+    <a class="nav-link {% if request.resolver_match.namespace == 'listening' %}active{% endif %}" href="{% url 'listening:exercise_list' %}">Listening</a>
+    <a class="nav-link {% if request.resolver_match.namespace == 'reading' %}active{% endif %}" href="{% url 'reading:exercise_list' %}">Reading</a>
+    <a class="nav-link {% if request.resolver_match.namespace == 'writing' %}active{% endif %}" href="{% url 'writing:prompt_list' %}">Writing</a>
+    <a class="nav-link {% if request.resolver_match.namespace == 'speaking' %}active{% endif %}" href="{% url 'speaking:exercise_list' %}">Speaking</a>
+    <a class="nav-link {% if request.resolver_match.namespace == 'vocabulary' %}active{% endif %}" href="{% url 'vocabulary:topic_list' %}">Vocabulary</a>
+    <a class="nav-link {% if request.resolver_match.namespace == 'progress' %}active{% endif %}" href="{% url 'progress:dashboard' %}">Tiến độ</a>
+    <a class="nav-link {% if request.resolver_match.namespace == 'feedback' %}active{% endif %}" href="{% url 'feedback:feedback_submit' %}">Đánh giá</a>
+   {% endif %}
+   {% if user.is_authenticated and user.is_active and user.is_staff %}
+    {% if user.is_superuser or perms.writing.view_writingprompt or perms.speaking.view_speakingexercise or perms.receptive.view_exercise or perms.reading.view_readingexercise or perms.listening.view_listeningexercise or perms.vocabulary.view_topic or perms.auth.view_user or perms.feedback.view_servicefeedback %}
+    <a class="nav-link management-entry {% if request.resolver_match.namespace == 'management' %}active{% endif %}" href="{% url 'management:dashboard' %}">Quản lý</a>
+    {% endif %}
+   {% endif %}
+  </nav>
+  <div class="global-user">
+   {% if user.is_authenticated %}<a class="account-link" href="{% url 'accounts:profile' %}" title="Tài khoản cá nhân"><span class="user-avatar">{{ user.username|slice:':1'|upper }}</span><span class="account-name">{{ user.get_full_name|default:user.username|truncatechars:18 }}</span></a>
+   <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="logout-link" type="submit">Đăng xuất</button></form>
+   {% else %}<a class="nav-login" href="{% url 'accounts:login' %}">Đăng nhập</a><a class="nav-signup" href="{% url 'accounts:register' %}">Đăng ký</a>{% endif %}
+  </div>
+ </div>
+</header>

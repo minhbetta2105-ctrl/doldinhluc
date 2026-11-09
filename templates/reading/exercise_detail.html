@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+{% load receptive_tags %}
+
+{% block title %}{{ exercise.title }} - Luyện tập Reading{% endblock %}
+
+{% block extra_head %}
+<style>
+    .test-header {
+        background: #ffffff;
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 24px;
+        position: sticky;
+        top: 72px;
+        z-index: 90;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .test-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 24px;
+        margin-top: 24px;
+        align-items: start;
+    }
+
+    .content-column {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .passage-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        max-height: 480px;
+        overflow-y: auto;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .passage-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .passage-text {
+        font-size: 15px;
+        line-height: 1.8;
+        color: #334155;
+        white-space: pre-wrap;
+    }
+
+    .questions-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .question-card {
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .question-card:last-child {
+        border-bottom: none;
+    }
+
+    .question-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 14px;
+    }
+
+    .options-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .option-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .option-label:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    .option-label.selected {
+        background: #fff5f5;
+        border-color: var(--primary);
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .short-text-input {
+        width: 100%;
+        max-width: 400px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        outline: none;
+    }
+
+    .short-text-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(201, 33, 39, 0.1);
+    }
+
+    /* Sidebar Palette */
+    .sidebar-palette {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        position: sticky;
+        top: 140px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .palette-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .palette-btn {
+        height: 38px;
+        border: 1px solid var(--border-color);
+        background: #f8fafc;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #475569;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .palette-btn.answered {
+        background: #fee2e2;
+        color: var(--primary);
+        border-color: #fca5a5;
+    }
+
+    .palette-btn:hover {
+        border-color: var(--primary);
+    }
+
+    /* Modal xác nhận nộp bài */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-card {
+        background: #ffffff;
+        border-radius: var(--radius-lg);
+        max-width: 480px;
+        width: 90%;
+        padding: 28px;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'home' %}">Trang chủ</a>
+    <span>/</span>
+    <a href="{% url 'reading:exercise_list' %}">Reading</a>
+    <span>/</span>
+    <span>{{ exercise.title }}</span>
+</div>
+
+<!-- Header bài làm -->
+<div class="test-header" style="border-radius: var(--radius-md); margin-bottom: 20px;">
+    <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b;">{{ exercise.title }}</h1>
+        <p style="font-size: 13px; color: #64748b;">Đọc bài và trả lời các câu hỏi. Nộp bài để lưu kết quả luyện tập của bạn.</p>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <span id="answered-counter" style="font-size: 14px; font-weight: 600; color: #334155;">Đã trả lời: 0/{{ total_questions }}</span>
+        <button type="button" class="btn btn-primary" onclick="openSubmitModal()">Nộp bài</button>
+    </div>
+</div>
+
+<form id="reading-form" method="POST" action="{% url 'reading:exercise_submit' exercise.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="submission_key" value="{{ submission_key }}">
+    <input type="hidden" name="started_at" value="{{ started_at }}">
+
+    <div class="test-layout">
+        <!-- Cột trái: Passage & Questions -->
+        <div class="content-column">
+            <!-- Passage (Cuộn độc lập) -->
+            <div class="passage-box">
+                <div class="passage-title">
+                    <span>Reading Passage</span>
+                    <span style="font-size: 12px; font-weight: 400; color: #94a3b8;">Cuộn để đọc toàn bộ bài</span>
+                </div>
+                <div class="passage-text">{{ exercise.passage }}</div>
+            </div>
+
+            <!-- Danh sách câu hỏi -->
+            <div class="questions-box">
+                <h2 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 16px;">Questions</h2>
+                {% for q in questions %}
+                    <div id="q-box-{{ q.id }}" class="question-card">
+                        <div class="question-title">
+                            Câu {{ q.order_no }}. {{ q.question_text }}
+                        </div>
+
+                        {% if q.question_type == 'MCQ' or q.question_type == 'TFNG' or q.question_type == 'YNNG' or q.question_type == 'MATCHING' %}
+                            <div class="options-group">
+                                {% if q.options.all %}
+                                    {% for opt in q.options.all %}
+                                        <label class="option-label" onclick="selectOption(this, '{{ q.id }}')">
+                                            <input type="radio" name="answer_{{ q.id }}" value="{{ opt.option_key }}" style="accent-color: var(--primary);" onchange="updateProgress('{{ q.id }}')">
+                                            <span>{{ opt|option_label }}</span>
+                                        </label>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="muted">Câu hỏi này chưa có phương án hợp lệ. Vui lòng báo quản trị viên.</span>
+                                {% endif %}
+                            </div>
+                        {% elif q.question_type == 'SHORT_TEXT' %}
+                            <div>
+                                <input type="text" name="answer_{{ q.id }}" class="short-text-input" placeholder="Nhập câu trả lời..." oninput="updateProgress('{{ q.id }}')">
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Cột phải: Palette câu hỏi -->
+        <div class="sidebar-palette">
+            <h3 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Danh sách câu hỏi</h3>
+            <p style="font-size: 12px; color: #64748b;">Chọn số câu để chuyển nhanh đến câu hỏi</p>
+            
+            <div class="palette-grid">
+                {% for q in questions %}
+                    <a href="#q-box-{{ q.id }}" id="palette-btn-{{ q.id }}" class="palette-btn">
+                        {{ q.order_no }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #64748b;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 14px; height: 14px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 3px;"></span>
+                    <span>Đã trả lời</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 14px; height: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 3px;"></span>
+                    <span>Chưa trả lời</span>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="openSubmitModal()">
+                Nộp bài
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Modal xác nhận nộp bài (UC-REA-03 & hinh-21.png) -->
+<div id="submit-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="font-size: 40px; margin-bottom: 16px;">📝</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 10px;">Xác nhận nộp bài</h3>
+        <p id="modal-msg" style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 24px;">
+            Bạn có chắc chắn muốn nộp bài Reading này không?
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button" class="btn btn-outline" onclick="closeSubmitModal()">Ở lại làm tiếp</button>
+            <button type="button" class="btn btn-primary" onclick="confirmSubmit()">Nộp bài ngay</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const totalQuestions = {{ total_questions }};
+    const answeredSet = new Set();
+
+    function updateProgress(questionId) {
+        let isAnswered = false;
+        const radios = document.querySelectorAll(`input[name="answer_${questionId}"][type="radio"]`);
+        if (radios.length > 0) {
+            for (let r of radios) {
+                if (r.checked) { isAnswered = true; break; }
+            }
+        } else {
+            const txt = document.querySelector(`input[name="answer_${questionId}"][type="text"]`);
+            if (txt && txt.value.trim().length > 0) {
+                isAnswered = true;
+            }
+        }
+
+        const btn = document.getElementById(`palette-btn-${questionId}`);
+        if (isAnswered) {
+            answeredSet.add(questionId);
+            if (btn) btn.classList.add('answered');
+        } else {
+            answeredSet.delete(questionId);
+            if (btn) btn.classList.remove('answered');
+        }
+
+        document.getElementById('answered-counter').innerText = `Đã trả lời: ${answeredSet.size}/${totalQuestions}`;
+    }
+
+    function selectOption(labelElem, questionId) {
+        const parent = labelElem.closest('.options-group');
+        parent.querySelectorAll('.option-label').forEach(lbl => lbl.classList.remove('selected'));
+        labelElem.classList.add('selected');
+        updateProgress(questionId);
+    }
+
+    function openSubmitModal() {
+        const remaining = totalQuestions - answeredSet.size;
+        const msgElem = document.getElementById('modal-msg');
+        if (remaining > 0) {
+            msgElem.innerHTML = `Bạn vẫn còn <strong>${remaining}</strong> câu hỏi chưa trả lời.<br>Các câu bỏ trống sẽ không được tính điểm. Bạn có chắc chắn muốn nộp bài?`;
+        } else {
+            msgElem.innerHTML = `Bạn đã hoàn thành đủ <strong>${totalQuestions}/${totalQuestions}</strong> câu hỏi.<br>Sau khi nộp, bạn sẽ nhận được kết quả và lời giải thích chi tiết.`;
+        }
+        document.getElementById('submit-modal').classList.add('active');
+    }
+
+    function closeSubmitModal() {
+        document.getElementById('submit-modal').classList.remove('active');
+    }
+
+    function confirmSubmit() {
+        document.getElementById('reading-form').submit();
+    }
+
+    // Cảnh báo khi rời bài khi chưa nộp (A3)
+    window.addEventListener('beforeunload', function (e) {
+        if (answeredSet.size > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    document.getElementById('reading-form').addEventListener('submit', function() {
+        window.removeEventListener('beforeunload', () => {});
+    });
+</script>
+{% endblock %}

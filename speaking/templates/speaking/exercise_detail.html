@@ -1,0 +1,498 @@
+{% extends "speaking/base_speaking.html" %}
+
+{% block title %}Luyện nói: {{ exercise.title }}{% endblock %}
+
+{% block breadcrumbs %}
+    <span>&rsaquo;</span>
+    <a href="{% url 'speaking:exercise_list' %}">Danh sách bài luyện</a>
+    <span>&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">{{ exercise.title|truncatechars:40 }}</span>
+{% endblock %}
+
+{% block module_content %}
+<div style="display: grid; grid-template-columns: 1fr 380px; gap: 28px; align-items: start;">
+
+    <!-- CỘT CHÍNH: NỘI DUNG ĐỀ VÀ KHU VỰC GHI ÂM (UC-SPK-02) -->
+    <div>
+        <!-- Thẻ thông tin đề bài -->
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 28px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap;">
+                <span class="badge badge-part">{{ exercise.get_part_display }}</span>
+                <span class="badge badge-level">{{ exercise.get_level_display }}</span>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-red); text-transform: uppercase;">
+                    Chủ đề: {{ exercise.topic }}
+                </span>
+            </div>
+
+            <h1 style="color: var(--dol-gray-900); font-size: 1.45rem; line-height: 1.35; margin-bottom: 16px;">
+                {{ exercise.title }}
+            </h1>
+
+            <div style="background-color: #F8FAFC; border-left: 4px solid var(--dol-red); padding: 18px 20px; border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.975rem; color: var(--dol-charcoal); line-height: 1.7; white-space: pre-line;">
+{{ exercise.prompt_text }}
+            </div>
+        </div>
+
+        {% if form.errors %}
+            <div class="alert-error" style="margin-bottom: 24px;">
+                <strong>Lỗi bài nộp:</strong>
+                <ul style="margin: 8px 0 0 20px;">
+                    {% for field, errors in form.errors.items %}
+                        {% for err in errors %}
+                            <li>{{ err }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if db_error %}
+            <div class="alert-error" style="margin-bottom: 24px;">{{ db_error }}</div>
+        {% endif %}
+
+        <!-- KHU VỰC THỰC HÀNH GHI ÂM & NỘP BÀI (UC-SPK-02, UC-SPK-03) -->
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: 1.2rem; color: var(--dol-gray-900); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                🎙️ Bản ghi âm câu trả lời của bạn
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--dol-gray-600); margin-bottom: 24px;">
+                Bạn có thể ghi âm trực tiếp bằng microphone trình duyệt hoặc tải lên tệp âm thanh có sẵn từ máy tính.
+            </p>
+
+            <!-- Bộ điều khiển Ghi âm trực tiếp (HTML5 MediaRecorder) -->
+            <div style="background-color: #F8FAFC; border: 2px dashed var(--dol-gray-300); border-radius: var(--radius-lg); padding: 28px; text-align: center; margin-bottom: 24px;">
+
+                <!-- Trạng thái chưa ghi âm -->
+                <div id="record-idle-state">
+                    <button type="button" id="btn-start-record" class="btn btn-primary" style="padding: 12px 28px; font-size: 1rem; border-radius: 30px;">
+                        🔴 Bắt đầu ghi âm
+                    </button>
+                    <p style="font-size: 0.8rem; color: var(--dol-gray-500); margin-top: 10px;">
+                        Nhấn nút và cấp quyền microphone để bắt đầu
+                    </p>
+                </div>
+
+                <!-- Trạng thái đang ghi âm -->
+                <div id="record-recording-state" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px;">
+                        <span class="pulsing-record-dot"></span>
+                        <span style="font-size: 1.1rem; font-weight: 700; color: var(--dol-red);">Đang ghi âm...</span>
+                        <span id="record-timer" style="font-size: 1.5rem; font-weight: 800; font-family: monospace; color: var(--dol-gray-900); margin-left: 8px;">00:00</span>
+                    </div>
+                    <button type="button" id="btn-stop-record" class="btn btn-secondary" style="padding: 10px 24px; font-size: 0.95rem; border-color: var(--dol-red); color: var(--dol-red);">
+                        ⏹ Dừng ghi âm
+                    </button>
+                </div>
+
+                <!-- Trạng thái đã ghi âm xong & nghe lại -->
+                <div id="record-completed-state" style="display: none;">
+                    <div style="margin-bottom: 16px;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--dol-green); display: block; margin-bottom: 8px;">
+                            ✓ Đã ghi âm thành công! Hãy nghe lại trước khi nộp:
+                        </span>
+                        <audio id="audio-playback" controls style="width: 100%; max-width: 480px; margin: 0 auto; display: block;"></audio>
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                        <button type="button" id="btn-re-record" class="btn btn-secondary" style="font-size: 0.85rem;">
+                            🔄 Ghi âm lại
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Thông báo lỗi microphone nếu có -->
+                <div id="record-error-box" style="display: none; color: var(--dol-red); font-size: 0.875rem; margin-top: 14px; background-color: var(--dol-red-light); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--dol-red-subtle);"></div>
+            </div>
+
+            <!-- Tải tệp từ máy tính thay thế -->
+            <div style="background-color: var(--dol-white); border-top: 1px solid var(--dol-gray-200); padding-top: 20px;">
+                <label style="font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); display: block; margin-bottom: 6px;">
+                    📁 Hoặc chọn tệp âm thanh có sẵn từ máy tính:
+                </label>
+                <input type="file" id="file-upload-input" accept=".mp3,.wav,.webm,.ogg,.m4a,.aac,.flac" style="font-size: 0.85rem; padding: 6px; border: 1px solid var(--dol-gray-300); border-radius: 6px; width: 100%; max-width: 400px;">
+                <span style="display: block; font-size: 0.75rem; color: var(--dol-gray-500); margin-top: 4px;">
+                    Hỗ trợ định dạng .mp3, .wav, .webm, .ogg, .m4a (dung lượng tối đa 20MB).
+                </span>
+            </div>
+
+            <!-- Nút Nộp bài -->
+            <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--dol-gray-200); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <span id="audio-status-label" style="font-size: 0.85rem; color: var(--dol-gray-600);">
+                    Chưa có âm thanh được chọn
+                </span>
+                <button type="button" id="btn-open-submit-modal" class="btn btn-primary" style="padding: 12px 28px; font-size: 0.95rem;" disabled>
+                    🚀 Nộp bài & Chấm AI &rarr;
+                </button>
+            </div>
+        </div>
+
+        <!-- FORM ẨN ĐỂ SUBMIT DỮ LIỆU SANG BACKEND (UC-SPK-03) -->
+        <form id="speaking-submission-form" method="post" action="{% url 'speaking:exercise_submit' exercise.id %}" enctype="multipart/form-data" style="display: none;">
+            {% csrf_token %}
+            <input type="hidden" name="submission_key" id="form-submission-key" value="{{ submission_key }}">
+            <input type="file" name="audio_file" id="form-audio-file">
+        </form>
+    </div>
+
+    <!-- CỘT PHỤ: TÀI LIỆU HỖ TRỢ BÀI NÓI (UC-SPK-02 / UC-SPK-06) -->
+    <div>
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); position: sticky; top: 96px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--dol-gray-200); padding-bottom: 10px;">
+                <h3 style="font-size: 1rem; color: var(--dol-gray-900);">💡 Tài liệu hỗ trợ</h3>
+                <span style="font-size: 0.75rem; color: var(--dol-gray-500);">Lượt làm: {{ submission_count }}</span>
+            </div>
+
+            {% if support %}
+                <!-- Audio mẫu nếu có -->
+                {% if support.sample_audio_file %}
+                    <div style="margin-bottom: 20px; background-color: var(--dol-blue-light); border: 1px solid #BEE3F8; border-radius: var(--radius-md); padding: 12px;">
+                        <span style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--dol-blue); margin-bottom: 6px;">
+                            🎧 Audio bài mẫu tham khảo
+                        </span>
+                        <audio controls src="{{ support.sample_audio_file.url }}" style="width: 100%; height: 36px;"></audio>
+                    </div>
+                {% endif %}
+
+                <!-- Tabs chọn nội dung hỗ trợ -->
+                <div style="display: flex; gap: 4px; border-bottom: 1px solid var(--dol-gray-300); margin-bottom: 16px;">
+                    <button type="button" class="support-tab-btn active" data-target="tab-hint" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700; border: none; background: none; cursor: pointer; border-bottom: 2px solid var(--dol-red); color: var(--dol-red);">
+                        Gợi ý ý tưởng
+                    </button>
+                    <button type="button" class="support-tab-btn" data-target="tab-sample" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border: none; background: none; cursor: pointer; color: var(--dol-gray-600);">
+                        Bài mẫu
+                    </button>
+                    <button type="button" class="support-tab-btn" data-target="tab-vocab" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border: none; background: none; cursor: pointer; color: var(--dol-gray-600);">
+                        Từ vựng
+                    </button>
+                </div>
+
+                <div id="tab-hint" class="support-tab-content" style="font-size: 0.875rem; color: var(--dol-gray-700); line-height: 1.6; white-space: pre-line;">
+                    {% if support.idea_hint %}
+                        {{ support.idea_hint }}
+                    {% else %}
+                        <em style="color: var(--dol-gray-500);">Chưa có gợi ý ý tưởng cho đề này.</em>
+                    {% endif %}
+                </div>
+
+                <div id="tab-sample" class="support-tab-content" style="display: none; font-size: 0.875rem; color: var(--dol-gray-700); line-height: 1.6; white-space: pre-line;">
+                    {% if support.sample_answer %}
+                        {{ support.sample_answer }}
+                    {% else %}
+                        <em style="color: var(--dol-gray-500);">Chưa có bài mẫu tham khảo cho đề này.</em>
+                    {% endif %}
+                </div>
+
+                <div id="tab-vocab" class="support-tab-content" style="display: none; font-size: 0.875rem; color: var(--dol-gray-700); line-height: 1.6; white-space: pre-line;">
+                    {% if support.suggested_vocabulary %}
+                        {{ support.suggested_vocabulary }}
+                    {% else %}
+                        <em style="color: var(--dol-gray-500);">Chưa có từ vựng gợi ý cho đề này.</em>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p style="font-size: 0.875rem; color: var(--dol-gray-500); text-align: center; padding: 20px 0;">
+                    Chưa có tài liệu hỗ trợ cho bài Speaking này.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- MODAL XÁC NHẬN NỘP BÀI SPEAKING (UC-SPK-03) -->
+<div id="submit-confirm-modal" style="display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background-color: var(--dol-white); border-radius: var(--radius-lg); max-width: 500px; width: 100%; padding: 28px; box-shadow: var(--shadow-xl); position: relative;">
+        <h3 style="color: var(--dol-gray-900); font-size: 1.25rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            ⚠️ Xác nhận nộp bài luyện Speaking
+        </h3>
+        <p style="color: var(--dol-gray-600); font-size: 0.9rem; line-height: 1.6; margin-bottom: 16px;">
+            Sau khi nộp bài, tệp âm thanh của bạn sẽ được lưu an toàn vào hệ thống và gửi đến <strong>Gemini AI</strong> để phân tích âm thanh, phiên âm transcript và chấm điểm 4 tiêu chí IELTS Speaking.
+        </p>
+
+        <div style="background-color: #F8FAFC; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 20px; font-size: 0.85rem;">
+            <div>🎧 <strong>Tệp âm thanh:</strong> <span id="modal-audio-info">Đang kiểm tra...</span></div>
+            <div style="margin-top: 4px;">🎯 <strong>Đề thi:</strong> {{ exercise.title|truncatechars:35 }}</div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" id="btn-cancel-modal" class="btn btn-secondary">
+                Hủy bỏ
+            </button>
+            <button type="button" id="btn-confirm-submit" class="btn btn-primary">
+                ✓ Xác nhận & Nộp bài
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.pulsing-record-dot {
+    width: 14px;
+    height: 14px;
+    background-color: var(--dol-red);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 1s infinite alternate;
+}
+@keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.2); opacity: 1; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. Quản lý trạng thái ghi âm
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordedBlob = null;
+    let recordTimerInterval = null;
+    let recordStartTime = null;
+    let hasUnsavedRecording = false;
+
+    const btnStart = document.getElementById("btn-start-record");
+    const btnStop = document.getElementById("btn-stop-record");
+    const btnReRecord = document.getElementById("btn-re-record");
+    const timerElem = document.getElementById("record-timer");
+    const errorBox = document.getElementById("record-error-box");
+    const playback = document.getElementById("audio-playback");
+    const fileUploadInput = document.getElementById("file-upload-input");
+    const statusLabel = document.getElementById("audio-status-label");
+    const btnOpenModal = document.getElementById("btn-open-submit-modal");
+
+    const stateIdle = document.getElementById("record-idle-state");
+    const stateRecording = document.getElementById("record-recording-state");
+    const stateCompleted = document.getElementById("record-completed-state");
+
+    const modal = document.getElementById("submit-confirm-modal");
+    const modalAudioInfo = document.getElementById("modal-audio-info");
+    const btnCancelModal = document.getElementById("btn-cancel-modal");
+    const btnConfirmSubmit = document.getElementById("btn-confirm-submit");
+    const hiddenForm = document.getElementById("speaking-submission-form");
+    const hiddenFileInput = document.getElementById("form-audio-file");
+
+    // Format timer MM:SS
+    function updateTimer() {
+        if (!recordStartTime) return;
+        const elapsedSec = Math.floor((Date.now() - recordStartTime) / 1000);
+        const mins = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
+        const secs = String(elapsedSec % 60).padStart(2, "0");
+        timerElem.textContent = mins + ":" + secs;
+    }
+
+    // Lựa chọn MIME type hỗ trợ tốt nhất
+    function getBestMimeType() {
+        const types = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/ogg;codecs=opus",
+            "audio/wav",
+            "audio/mp4"
+        ];
+        for (const t of types) {
+            if (MediaRecorder.isTypeSupported(t)) {
+                return t;
+            }
+        }
+        return "";
+    }
+
+    // Bắt đầu ghi âm
+    btnStart.addEventListener("click", async function () {
+        errorBox.style.display = "none";
+        audioChunks = [];
+        recordedBlob = null;
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            errorBox.textContent = "Trình duyệt của bạn không hỗ trợ tính năng ghi âm trực tiếp. Vui lòng tải lên tệp âm thanh bên dưới.";
+            errorBox.style.display = "block";
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mimeType = getBestMimeType();
+            const options = mimeType ? { mimeType: mimeType } : {};
+
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = function (e) {
+                if (e.data && e.data.size > 0) {
+                    audioChunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = function () {
+                // Tạo blob âm thanh
+                const chosenMime = mediaRecorder.mimeType || "audio/webm";
+                recordedBlob = new Blob(audioChunks, { type: chosenMime });
+                const audioUrl = URL.createObjectURL(recordedBlob);
+                playback.src = audioUrl;
+
+                hasUnsavedRecording = true;
+                stateRecording.style.display = "none";
+                stateCompleted.style.display = "block";
+
+                // Đặt file vào input và kích hoạt nút nộp
+                assignBlobToHiddenForm(recordedBlob, "recording.webm");
+                statusLabel.textContent = "Đã sẵn sàng nộp bản ghi âm (" + timerElem.textContent + ")";
+                statusLabel.style.color = "var(--dol-green)";
+                btnOpenModal.disabled = false;
+
+                // Tắt các track microphone
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start(250); // Thu thập chunks mỗi 250ms
+            recordStartTime = Date.now();
+            updateTimer();
+            recordTimerInterval = setInterval(updateTimer, 500);
+
+            stateIdle.style.display = "none";
+            stateRecording.style.display = "block";
+            stateCompleted.style.display = "none";
+
+        } catch (err) {
+            console.error("Lỗi microphone:", err);
+            let msg = "Không thể truy cập microphone. Vui lòng kiểm tra quyền cấp phép trên trình duyệt.";
+            if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                msg = "Bạn đã từ chối quyền truy cập microphone. Vui lòng bật lại trong cài đặt trình duyệt hoặc tải tệp âm thanh bên dưới.";
+            }
+            errorBox.textContent = msg;
+            errorBox.style.display = "block";
+        }
+    });
+
+    // Dừng ghi âm
+    btnStop.addEventListener("click", function () {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+        }
+        if (recordTimerInterval) {
+            clearInterval(recordTimerInterval);
+            recordTimerInterval = null;
+        }
+    });
+
+    // Ghi âm lại
+    btnReRecord.addEventListener("click", function () {
+        if (playback.src) {
+            URL.revokeObjectURL(playback.src);
+            playback.src = "";
+        }
+        recordedBlob = null;
+        hasUnsavedRecording = false;
+        hiddenFileInput.value = "";
+        fileUploadInput.value = "";
+        statusLabel.textContent = "Chưa có âm thanh được chọn";
+        statusLabel.style.color = "var(--dol-gray-600)";
+        btnOpenModal.disabled = true;
+
+        stateCompleted.style.display = "none";
+        stateRecording.style.display = "none";
+        stateIdle.style.display = "block";
+        timerElem.textContent = "00:00";
+    });
+
+    // Chuyển Blob thành File đưa vào hidden input thông qua DataTransfer
+    function assignBlobToHiddenForm(blob, filename) {
+        try {
+            const file = new File([blob], filename, { type: blob.type || "audio/webm" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            hiddenFileInput.files = dataTransfer.files;
+        } catch (err) {
+            console.warn("DataTransfer fallback:", err);
+        }
+    }
+
+    // Xử lý khi người dùng tải tệp từ máy tính
+    fileUploadInput.addEventListener("change", function () {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+
+            // Kiểm tra dung lượng 20MB
+            if (file.size > 20 * 1024 * 1024) {
+                alert("Tệp âm thanh vượt quá dung lượng tối đa cho phép (20MB).");
+                this.value = "";
+                return;
+            }
+
+            // Gán vào hidden file input
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            hiddenFileInput.files = dt.files;
+
+            // Hiển thị player
+            playback.src = URL.createObjectURL(file);
+            stateIdle.style.display = "none";
+            stateRecording.style.display = "none";
+            stateCompleted.style.display = "block";
+
+            hasUnsavedRecording = true;
+            statusLabel.textContent = "Đã chọn tệp: " + file.name + " (" + (file.size / (1024 * 1024)).toFixed(2) + "MB)";
+            statusLabel.style.color = "var(--dol-green)";
+            btnOpenModal.disabled = false;
+        }
+    });
+
+    // Mở Modal xác nhận
+    btnOpenModal.addEventListener("click", function () {
+        if (!hiddenFileInput.files || hiddenFileInput.files.length === 0) {
+            alert("Vui lòng ghi âm hoặc chọn tệp âm thanh trước khi nộp.");
+            return;
+        }
+        const file = hiddenFileInput.files[0];
+        modalAudioInfo.textContent = file.name + " (" + (file.size / 1024).toFixed(1) + " KB)";
+        modal.style.display = "flex";
+    });
+
+    btnCancelModal.addEventListener("click", function () {
+        modal.style.display = "none";
+    });
+
+    // Xác nhận nộp bài
+    btnConfirmSubmit.addEventListener("click", function () {
+        hasUnsavedRecording = false; // Tắt cảnh báo rời trang
+        this.disabled = true;
+        this.textContent = "Đang tải bài nộp & gọi AI...";
+        hiddenForm.submit();
+    });
+
+    // Cảnh báo rời trang khi có bản ghi chưa lưu
+    window.addEventListener("beforeunload", function (e) {
+        if (hasUnsavedRecording) {
+            e.preventDefault();
+            e.returnValue = "Bạn có bài ghi âm chưa được nộp. Dữ liệu sẽ bị mất nếu rời khỏi trang!";
+            return e.returnValue;
+        }
+    });
+
+    // Tab chuyển đổi tài liệu hỗ trợ
+    const tabBtns = document.querySelectorAll(".support-tab-btn");
+    const tabContents = document.querySelectorAll(".support-tab-content");
+    tabBtns.forEach(btn => {
+        btn.addEventListener("click", function () {
+            tabBtns.forEach(b => {
+                b.style.borderBottom = "none";
+                b.style.color = "var(--dol-gray-600)";
+                b.style.fontWeight = "600";
+            });
+            tabContents.forEach(c => c.style.display = "none");
+
+            this.style.borderBottom = "2px solid var(--dol-red)";
+            this.style.color = "var(--dol-red)";
+            this.style.fontWeight = "700";
+
+            const targetId = this.getAttribute("data-target");
+            const targetElem = document.getElementById(targetId);
+            if (targetElem) {
+                targetElem.style.display = "block";
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

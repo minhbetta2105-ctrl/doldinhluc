@@ -1,0 +1,9 @@
+{% extends 'management/base_admin.html' %}
+{% block title %}Tiến độ học viên | DOL IELTS{% endblock %}
+{% block teacher_heading %}Theo dõi tiến độ học tập{% endblock %}
+{% block management_content %}
+<div class="teacher-data-card"><h2>Học viên và lịch sử luyện tập</h2><p>Danh sách tài khoản đang có quyền HOC_VIEN hoặc đã phát sinh bài nộp. Dữ liệu được tổng hợp từ các module hiện có.</p>
+<form method="get" class="practice-filter-bar"><label class="practice-filter-field practice-filter-query"><span class="practice-filter-label">Tìm học viên</span><input type="search" name="q" value="{{ q }}" placeholder="Tên hoặc email"></label><div class="practice-filter-actions"><button type="submit" class="btn btn-primary">Tìm</button><a href="{% url 'management:student_progress_list' %}" class="btn btn-outline">Đặt lại</a></div></form>
+<div style="overflow-x:auto"><table class="teacher-progress-table"><thead><tr><th>Học viên</th><th>Trạng thái quyền</th><th>Tổng lượt luyện</th><th>Chi tiết</th></tr></thead><tbody>{% for item in records %}<tr><td><strong>{{ item.user.get_full_name|default:item.user.username }}</strong><div>{{ item.user.email }}</div></td><td>{% if item.is_student %}HOC_VIEN{% else %}Đã thu hồi{% endif %}</td><td>{{ item.total }}</td><td><a class="btn btn-outline" href="{% url 'management:student_progress_detail' item.user.pk %}">Xem tiến độ</a></td></tr>{% empty %}<tr><td colspan="4">Chưa có dữ liệu phù hợp.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

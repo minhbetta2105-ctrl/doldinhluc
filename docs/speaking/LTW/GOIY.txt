@@ -1,0 +1,3048 @@
+import pypandoc, os, textwrap
+
+content = r"""
+SỔ TAY ÔN TẬP THỰC HÀNH DJANGO – MIS3010
+Dựa trên Bài tập Chương 2, Bài tập Chương 4 và các đề kiểm tra thực hành mẫu được cung cấp
+Phiên bản: 30/10/2026
+Ngôn ngữ: Tiếng Việt
+Mục tiêu: Giúp người mới học Django hiểu đề, xác định file cần sửa, viết code theo từng bước và tự luyện tập trước kỳ thi.
+
+======================================================================
+0. PHẠM VI VÀ CÁCH SỬ DỤNG TÀI LIỆU
+======================================================================
+
+Tài liệu này được biên soạn để HỌC VÀ LUYỆN TẬP TRƯỚC KỲ THI. Một số đề mẫu người học cung cấp ghi rõ không được sử dụng tài liệu. Vì vậy, hãy tuân thủ quy chế của giảng viên và chỉ sử dụng tài liệu/AI trong thời gian, hình thức được phép. Tài liệu không hướng dẫn vượt qua MySEB hoặc sử dụng AI trái với quy định của kỳ thi.
+
+Nguồn nội dung chính:
+1. Bài tập Chương 2:
+   - Bài tập 1: Tạo Model Project và Task có quan hệ Một – Nhiều.
+   - Bài tập 2: Tạo trang xem chi tiết một cuốn sách, có View, Template, URL và liên kết từ danh sách.
+2. Bài tập Chương 4:
+   - Bài tập 1: Book Search bằng SearchForm, GET, tìm theo title hoặc contributor.
+   - Bài tập 2: PublisherForm, thêm/sửa Publisher, template dùng chung, Django messages.
+   - Bài tập 3: ReviewForm, thêm/sửa Review theo một Book, cập nhật date_edited.
+3. Bài thực hành Chương 2:
+   - Model Publisher, Contributor, Book, BookContributor, Review.
+   - Migration, SQLite, Django shell, ORM, ForeignKey, ManyToManyField, View, URL, Template.
+4. Slide Chương 2:
+   - ORM, Model, kiểu trường, khóa chính, ForeignKey, ManyToManyField, on_delete, View, URL, Template.
+5. Slide Chương 4:
+   - HTML Form, GET/POST, CSRF, Django Form, ModelForm, validation, cleaned_data, clean().
+6. Đề mẫu nhìn thấy trong ảnh:
+   - Mã 105: Quản lý bài viết và chuyên mục.
+   - Mã 109: Quản lý kho hàng.
+   - Mã 104: Một phần đề quản lý bài viết/chuyên mục.
+   - Mã 111: Quản lý bán sách, khách hàng và đơn hàng.
+
+LƯU Ý VỀ ĐỘ ĐẦY ĐỦ CỦA ĐỀ MẪU:
+- Đề 111 có ảnh trang 1 và trang 2.
+- Đề 105 có phần mô tả Model và các yêu cầu nhìn thấy ở ảnh trang 1, cùng phần yêu cầu 3 và 4 ở ảnh tiếp theo.
+- Đề 109 chỉ nhìn thấy trang 1/2 trong ảnh được gửi. Không tự suy đoán nội dung trang 2.
+- Đề 104 chỉ nhìn thấy một phần nội dung. Tài liệu chỉ hướng dẫn phần đọc được.
+- Khi đề thật dùng tên Model, tên trường, tên View, tên Template hoặc URL khác, phải thay đúng theo đề. Không bê nguyên tên của ví dụ khác.
+
+CÁCH DÙNG:
+- Đọc mục 1 để hiểu cách phân tích đề.
+- Khi gặp đề về bảng dữ liệu, tìm mục 3 và mục 4.
+- Khi gặp đề danh sách/chi tiết, tìm mục 5.
+- Khi gặp đề tìm kiếm, tìm mục 6.
+- Khi gặp đề thêm/sửa, tìm mục 7.
+- Khi gặp quan hệ N-N có bảng trung gian, tìm mục 8.
+- Khi gặp đề 105/109/111, tìm đúng mục 9 tương ứng.
+- Dùng mục 10 để dò lỗi.
+- Dùng mục 11 để tra nhanh từ khóa.
+
+======================================================================
+1. CÁCH ĐỌC ĐỀ VÀ BIẾN ĐỀ THÀNH CÁC BƯỚC CODE
+======================================================================
+
+1.1. Đọc đề theo 5 nhóm yêu cầu
+
+NHÓM A – PROJECT VÀ APP
+Tìm các cụm:
+- Tạo dự án Django tên ...
+- Tạo một app tên ...
+- Cấu hình app trong settings.py.
+
+=> Việc cần làm:
+1. Tạo Project.
+2. Tạo App.
+3. Thêm tên App vào INSTALLED_APPS.
+4. Kiểm tra manage.py nằm ở thư mục đang làm việc.
+
+NHÓM B – MODEL VÀ CƠ SỞ DỮ LIỆU
+Tìm các cụm:
+- Bảng dữ liệu gồm ...
+- Khóa chính, khóa ngoại.
+- Liên kết với bảng ...
+- Quan hệ Một – Nhiều.
+- Quan hệ Nhiều – Nhiều.
+- Khi xóa ... thì ...
+
+=> Việc cần làm:
+1. Mở app/models.py.
+2. Mỗi bảng thường tương ứng một class kế thừa models.Model.
+3. Mỗi cột là một thuộc tính dùng kiểu Field phù hợp.
+4. Khai báo ForeignKey hoặc ManyToManyField theo quan hệ.
+5. Chọn on_delete đúng theo yêu cầu xóa.
+6. Chạy makemigrations.
+7. Chạy migrate.
+
+NHÓM C – ADMIN
+Tìm các cụm:
+- Đăng ký Model trong Admin.
+- Danh sách hiển thị các cột ...
+- Tìm kiếm theo ...
+- Tạo tài khoản Superuser.
+
+=> Việc cần làm:
+1. Tạo Superuser nếu đề yêu cầu.
+2. Mở app/admin.py.
+3. import Model.
+4. Dùng admin.site.register() hoặc @admin.register().
+5. Nếu đề yêu cầu cột: dùng list_display.
+6. Nếu đề yêu cầu tìm kiếm: dùng search_fields.
+
+NHÓM D – DANH SÁCH / CHI TIẾT
+Tìm các cụm:
+- Tạo View ...
+- Truy xuất dữ liệu từ cơ sở dữ liệu.
+- Xuất danh sách ...
+- Trang chi tiết theo ID ...
+- Tạo Template tên ...
+- Tạo URL ...
+
+=> Việc cần làm:
+1. View lấy dữ liệu từ Model.
+2. View truyền dữ liệu vào context.
+3. View gọi render().
+4. App urls.py ánh xạ URL đến View.
+5. Project urls.py include App urls.py.
+6. Template hiển thị dữ liệu bằng {{ biến }} và {% for %}.
+7. Kiểm tra URL đúng như đề.
+
+NHÓM E – FORM THÊM/SỬA
+Tìm các cụm:
+- ModelForm.
+- Thêm mới và chỉnh sửa.
+- Nếu có ID thì sửa, không có ID thì thêm.
+- request.POST.
+- form.is_valid().
+- form.save().
+- Thông báo thành công.
+- Chuyển về trang danh sách.
+
+=> Việc cần làm:
+1. Tạo forms.py.
+2. Viết ModelForm.
+3. Viết View nhận ID tùy chọn.
+4. GET: hiển thị Form trống hoặc có dữ liệu cũ.
+5. POST: nhận dữ liệu, kiểm tra hợp lệ, lưu.
+6. Hiển thị thông báo.
+7. redirect về URL yêu cầu.
+8. Tạo Template Form có csrf_token.
+
+1.2. Bản đồ từ khóa đề bài sang file
+
+- “Bảng”, “trường”, “khóa chính”, “khóa ngoại” -> app/models.py
+- “Tạo bảng trong SQLite” -> makemigrations và migrate
+- “Nhập tối thiểu 5 bản ghi” -> Django Admin hoặc manage.py shell
+- “Quản lý trong Admin” -> app/admin.py
+- “Danh sách hiển thị cột” -> ModelAdmin.list_display
+- “Tìm kiếm trong Admin” -> ModelAdmin.search_fields
+- “Tạo View” -> app/views.py
+- “URL”, “đường dẫn” -> app/urls.py và project/urls.py
+- “Template”, “tiêu đề trang” -> app/templates/app_name/file.html
+- “Danh sách tất cả” -> Model.objects.all()
+- “Chi tiết theo ID” -> get_object_or_404(Model, id=...)
+- “Tìm kiếm” -> request.GET, forms.Form, filter(), __icontains
+- “Thêm/sửa” -> ModelForm, request.POST, instance=...
+- “Kiểm tra Form” -> form.is_valid()
+- “Lưu” -> form.save()
+- “Lưu nhưng cần sửa thêm dữ liệu trước” -> form.save(commit=False)
+- “Thông báo” -> django.contrib.messages
+- “Chuyển trang” -> redirect()
+- “Khi xóa bản ghi liên quan” -> on_delete=...
+- “Một kho có nhiều hàng hóa và một hàng hóa ở nhiều kho” -> ManyToManyField + through
+- “Một khách hàng có nhiều đơn hàng” -> ForeignKey đặt trong Order trỏ Customer
+- “Một bài viết thuộc nhiều chuyên mục” -> ManyToManyField + bảng trung gian
+
+1.3. Flow tổng quát của Django
+
+Trình duyệt
+    |
+    v
+URL của Project
+    |
+    v
+URL của App
+    |
+    v
+View
+    |
+    +----> Model / ORM ----> SQLite
+    |                           |
+    <---------------------------+
+    |
+    v
+Template (HTML)
+    |
+    v
+HTTP Response
+    |
+    v
+Trình duyệt hiển thị
+
+Cách nhớ:
+- URL: dẫn đường.
+- View: xử lý.
+- Model: mô tả và truy xuất dữ liệu.
+- Database: lưu dữ liệu.
+- Template: trình bày dữ liệu.
+- Form: nhận và kiểm tra dữ liệu người dùng gửi lên.
+
+======================================================================
+2. TẠO PROJECT, APP VÀ CẤU TRÚC THƯ MỤC
+======================================================================
+
+2.1. Tạo Project
+
+Mở Terminal trong PyCharm hoặc terminal tại thư mục muốn lưu project.
+
+Ví dụ đề yêu cầu Project tên KTGK:
+
+    django-admin startproject KTGK
+
+Sau đó đi vào thư mục chứa manage.py:
+
+    cd KTGK
+
+Kiểm tra thư mục có file manage.py.
+
+Nếu máy dùng lệnh python thay cho python3 hoặc py thì thay lệnh tương ứng. Không chạy lệnh trong nhầm thư mục.
+
+2.2. Tạo App
+
+Ví dụ đề yêu cầu App tên qlbaiviet:
+
+    python manage.py startapp qlbaiviet
+
+Tên App phải đúng tuyệt đối theo đề. Ví dụ qlbaiviet khác qlbaiViet nếu hệ điều hành phân biệt chữ hoa/thường trong đường dẫn.
+
+2.3. Đăng ký App
+
+Mở:
+
+    KTGK/settings.py
+
+Tìm INSTALLED_APPS và thêm tên App:
+
+    INSTALLED_APPS = [
+        ...
+        'qlbaiviet',
+    ]
+
+Nếu đề dùng App store thì thêm 'store'. Nếu App qlkhohang thì thêm 'qlkhohang'.
+
+Tại sao phải làm?
+Django chỉ nhận diện và quản lý App đã được khai báo trong INSTALLED_APPS.
+
+2.4. Cấu trúc thư mục nên có
+
+Ví dụ Project KTGK, App qlbaiviet:
+
+    KTGK/
+        manage.py
+        KTGK/
+            __init__.py
+            settings.py
+            urls.py
+            asgi.py
+            wsgi.py
+        qlbaiviet/
+            migrations/
+            __init__.py
+            admin.py
+            apps.py
+            models.py
+            tests.py
+            views.py
+            urls.py              <- tự tạo nếu chưa có
+            forms.py             <- tự tạo khi có Form
+            templates/
+                qlbaiviet/
+                    base.html
+                    dsbaiviet.html
+                    xembaiviet.html
+                    baiviet.html
+
+Django không tự tạo urls.py, forms.py hoặc thư mục templates trong App. Nếu đề cần thì tự tạo.
+
+2.5. Cấu hình URL Project
+
+Mở:
+
+    KTGK/urls.py
+
+Mẫu:
+
+    from django.contrib import admin
+    from django.urls import path, include
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('', include('qlbaiviet.urls')),
+    ]
+
+Giải thích:
+- path('admin/', admin.site.urls): mở khu vực quản trị.
+- path('', include('qlbaiviet.urls')): chuyển việc tìm URL sang urls.py của App.
+- include() giúp Project không phải chứa tất cả URL của từng App.
+
+Nếu App tên store thì thay qlbaiviet bằng store.
+
+2.6. Tạo urls.py trong App
+
+Ví dụ qlbaiviet/urls.py:
+
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        # Các path của App được khai báo tại đây.
+    ]
+
+Giải thích:
+- from . import views: import file views.py cùng thư mục.
+- urlpatterns: danh sách các ánh xạ URL.
+- path(): nối đường dẫn với hàm View.
+
+2.7. Chạy thử Project
+
+    python manage.py runserver
+
+Mở trình duyệt:
+
+    http://127.0.0.1:8000/
+
+Dừng server bằng Ctrl + C trong terminal.
+
+======================================================================
+3. MODEL, KIỂU DỮ LIỆU VÀ QUAN HỆ
+======================================================================
+
+3.1. Model là gì?
+
+Model là lớp Python mô tả cấu trúc một bảng dữ liệu.
+- Một class Model thường tương ứng một bảng.
+- Một thuộc tính của Model tương ứng một cột.
+- Một đối tượng Model tương ứng một dòng dữ liệu.
+
+Ví dụ: class Customer là bảng khách hàng; thuộc tính Name là cột tên khách hàng.
+
+3.2. Các kiểu Field thường dùng
+
+- AutoField: số nguyên tự tăng, thường dùng làm khóa chính.
+- CharField: văn bản ngắn, bắt buộc có max_length.
+- TextField: văn bản dài.
+- EmailField: văn bản có kiểm tra định dạng email.
+- URLField: địa chỉ URL.
+- IntegerField: số nguyên.
+- FloatField: số thực dấu chấm động.
+- DecimalField: số thập phân chính xác hơn cho tiền.
+- DateField: ngày tháng.
+- DateTimeField: ngày và giờ.
+- BooleanField: đúng/sai.
+- ForeignKey: khóa ngoại, quan hệ Một – Nhiều.
+- ManyToManyField: quan hệ Nhiều – Nhiều.
+- OneToOneField: quan hệ Một – Một.
+
+Ví dụ:
+    Ten = models.CharField(max_length=100)
+    MoTa = models.TextField(blank=True)
+    SoLuong = models.IntegerField()
+    Gia = models.DecimalField(max_digits=10, decimal_places=2)
+    NgayTao = models.DateField()
+
+Giải thích:
+- max_length: giới hạn độ dài CharField.
+- blank=True: cho phép để trống ở Form/validation.
+- null=True: cho phép lưu NULL trong CSDL. Không đồng nghĩa hoàn toàn với blank=True.
+- max_digits: tổng số chữ số của DecimalField.
+- decimal_places: số chữ số sau dấu thập phân.
+
+3.3. Khóa chính id
+
+Nếu không khai báo khóa chính, Django tự tạo khóa chính id dạng số tự tăng.
+
+Nếu đề yêu cầu khai báo tường minh:
+
+    id = models.AutoField(primary_key=True)
+
+Không tạo thêm một trường id khác nếu Django đã tự tạo id. Chọn một cách phù hợp, không khai báo trùng.
+
+3.4. Quan hệ Một – Nhiều (1-N)
+
+Ví dụ:
+- Một khách hàng có nhiều đơn hàng.
+- Mỗi đơn hàng thuộc về một khách hàng.
+
+Khóa ngoại phải đặt ở bảng NHIỀU, tức bảng Order:
+
+    class Order(models.Model):
+        Customer = models.ForeignKey(
+            Customer,
+            on_delete=models.CASCADE
+        )
+
+Cách nhớ:
+Một Customer -> nhiều Order.
+Do đó Order chứa ForeignKey trỏ Customer.
+
+3.5. Quan hệ Nhiều – Nhiều (N-N)
+
+Ví dụ:
+- Một bài viết thuộc nhiều chuyên mục.
+- Một chuyên mục chứa nhiều bài viết.
+
+Dùng ManyToManyField:
+
+    ChuyenMuc = models.ManyToManyField(ChuyenMuc)
+
+Nếu bảng trung gian chỉ cần hai khóa ngoại, Django có thể tự tạo bảng trung gian.
+Nếu đề yêu cầu bảng trung gian có thêm trường như ThuTu, phải tự tạo Model trung gian và dùng through:
+
+    ChuyenMuc = models.ManyToManyField(
+        ChuyenMuc,
+        through='BaiVietChuyenMuc'
+    )
+
+3.6. on_delete – xử lý khi xóa bản ghi được tham chiếu
+
+- models.CASCADE: xóa bản ghi liên quan theo.
+- models.PROTECT: chặn xóa bản ghi đang được tham chiếu.
+- models.SET_NULL: đặt khóa ngoại về NULL; trường FK phải có null=True.
+- models.SET_DEFAULT: đặt về giá trị mặc định; phải khai báo default phù hợp.
+
+Cách đọc đề:
+- “Xóa khách hàng thì xóa đơn hàng liên quan” -> Order.Customer dùng CASCADE.
+- “Chỉ xóa sách nếu không có đơn hàng liên quan” -> Order.Book dùng PROTECT.
+- “Xóa kho thì xóa liên kết hàng hóa – kho” -> FK Kho trong bảng trung gian dùng CASCADE.
+- “Xóa bài viết/chuyên mục thì xóa các dòng liên kết” -> hai FK trong bảng trung gian dùng CASCADE.
+
+Không tự chọn CASCADE cho mọi trường. Đọc câu chữ về xóa trong đề.
+
+3.7. __str__()
+
+Dùng để biểu diễn đối tượng Model thành chuỗi dễ đọc, thường thấy trong Admin và dropdown ForeignKey.
+
+Ví dụ:
+
+    def __str__(self):
+        return self.Ten
+
+Hoặc:
+
+    def __str__(self):
+        return f'{self.id} - {self.Ten}'
+
+======================================================================
+4. BÀI TẬP CHƯƠNG 2 – BÀI 1: MODEL PROJECT VÀ TASK
+======================================================================
+
+4.1. Đề yêu cầu gì?
+
+Bài tập Chương 2 yêu cầu:
+1. Tạo Project tên QLDA.
+2. Tạo App tên projectp.
+3. Thêm projectp vào INSTALLED_APPS.
+4. Tạo hai Model Project và Task có quan hệ Một – Nhiều trong projectp/models.py.
+5. Sinh mã và thực thi mã để tạo bảng trong CSDL.
+6. Mở Django shell và nhập các Model.
+7. Thao tác nhập và truy vấn dữ liệu.
+
+Đề bài không quy định chi tiết các thuộc tính của Project và Task trong phần mô tả được cung cấp. Vì vậy, các thuộc tính dưới đây chỉ là ví dụ tối thiểu để minh họa quan hệ, không phải thuộc tính bắt buộc do đề quy định.
+
+4.2. Phân tích quan hệ trước khi code
+
+Một Project có nhiều Task.
+Một Task chỉ thuộc một Project.
+
+Do đó:
+- Project là phía MỘT.
+- Task là phía NHIỀU.
+- ForeignKey đặt trong Task.
+
+4.3. Code models.py mẫu
+
+Mở projectp/models.py:
+
+    from django.db import models
+
+    class Project(models.Model):
+        Name = models.CharField(max_length=100)
+        Description = models.TextField(blank=True)
+
+        def __str__(self):
+            return self.Name
+
+    class Task(models.Model):
+        Title = models.CharField(max_length=200)
+        Description = models.TextField(blank=True)
+        Project = models.ForeignKey(
+            Project,
+            on_delete=models.CASCADE
+        )
+
+        def __str__(self):
+            return self.Title
+
+Giải thích từng phần:
+- import models: lấy thư viện Model của Django.
+- class Project(models.Model): khai báo bảng Project.
+- Name: tên dự án, văn bản tối đa 100 ký tự.
+- Description: mô tả dài, có thể bỏ trống trong ví dụ này.
+- class Task(models.Model): khai báo bảng Task.
+- Project = ForeignKey(...): mỗi Task liên kết một Project.
+- on_delete=CASCADE: nếu xóa Project thì các Task tham chiếu Project đó cũng bị xóa.
+- __str__: giúp nhìn thấy tên dễ đọc.
+
+Nếu đề yêu cầu Task có thêm trạng thái, ngày bắt đầu, ngày kết thúc thì bổ sung đúng trường theo đề; không tự thêm khi đề không yêu cầu.
+
+4.4. Tạo bảng trong SQLite
+
+Sau khi lưu models.py, chạy:
+
+    python manage.py makemigrations projectp
+
+Lệnh này tạo file migration mô tả thay đổi Model.
+
+Tiếp theo:
+
+    python manage.py migrate
+
+Lệnh này thực thi migration để tạo bảng thật trong SQLite.
+
+Cách nhớ:
+- makemigrations = tạo bản hướng dẫn thay đổi CSDL.
+- migrate = áp dụng thay đổi vào CSDL.
+
+Nếu đề hoặc giảng viên yêu cầu chỉ rõ app:
+
+    python manage.py migrate projectp
+
+4.5. Mở Django shell
+
+    python manage.py shell
+
+Khi xuất hiện dấu nhắc >>>, nhập Python.
+
+Import Model:
+
+    from projectp.models import Project, Task
+
+4.6. Tạo Project
+
+    p1 = Project.objects.create(
+        Name='Website bán sách',
+        Description='Dự án thực hành Django'
+    )
+
+Giải thích:
+- Project.objects: trình quản lý dữ liệu của Model.
+- create(): tạo và lưu bản ghi ngay.
+- p1: biến Python giữ đối tượng vừa tạo.
+
+Có thể tạo theo cách hai bước:
+
+    p2 = Project(
+        Name='Website quản lý kho',
+        Description='Theo dõi hàng hóa'
+    )
+    p2.save()
+
+4.7. Tạo Task liên kết với Project
+
+    Task.objects.create(
+        Title='Thiết kế cơ sở dữ liệu',
+        Description='Tạo các Model',
+        Project=p1
+    )
+
+Điểm cần nhớ:
+- Không truyền tên Project dưới dạng chuỗi.
+- Truyền đối tượng Project đã lấy/tạo từ CSDL.
+- Task chứa khóa ngoại trỏ tới Project.
+
+4.8. Truy vấn dữ liệu
+
+Lấy tất cả Project:
+
+    Project.objects.all()
+
+Lấy một Project theo ID:
+
+    Project.objects.get(id=1)
+
+Lấy một Project an toàn trong View thường dùng:
+
+    get_object_or_404(Project, id=1)
+
+Lấy tất cả Task:
+
+    Task.objects.all()
+
+Lấy Task thuộc Project p1:
+
+    Task.objects.filter(Project=p1)
+
+Lọc theo từ khóa:
+
+    Task.objects.filter(Title__icontains='cơ sở')
+
+Đếm số Task:
+
+    Task.objects.filter(Project=p1).count()
+
+Sắp xếp theo ID giảm dần:
+
+    Task.objects.order_by('-id')
+
+4.9. Sửa và xóa dữ liệu trong shell
+
+Sửa:
+
+    task = Task.objects.get(id=1)
+    task.Title = 'Hoàn thiện cơ sở dữ liệu'
+    task.save()
+
+Xóa:
+
+    task = Task.objects.get(id=1)
+    task.delete()
+
+Chú ý: Xóa dữ liệu là thao tác thật trên CSDL. Không chạy delete() nếu chỉ muốn xem dữ liệu.
+
+4.10. Đăng ký Admin để nhập dữ liệu nhanh (nếu đề yêu cầu)
+
+projectp/admin.py:
+
+    from django.contrib import admin
+    from .models import Project, Task
+
+    admin.site.register(Project)
+    admin.site.register(Task)
+
+Tạo tài khoản quản trị:
+
+    python manage.py createsuperuser
+
+Nhập username, email nếu được hỏi, password theo yêu cầu bài tập.
+
+Chạy server và mở:
+
+    http://127.0.0.1:8000/admin/
+
+4.11. Lỗi thường gặp ở bài này
+
+- App không có trong INSTALLED_APPS -> Django không nhận App.
+- Quên makemigrations -> chưa sinh migration.
+- Quên migrate -> bảng chưa được tạo.
+- ForeignKey viết nhầm vào Project thay vì Task -> sai hướng quan hệ.
+- Tạo Task với Project='Website bán sách' -> sai kiểu dữ liệu; phải truyền đối tượng Project.
+- Không import Model trong shell -> NameError.
+
+======================================================================
+5. BÀI TẬP CHƯƠNG 2 – BÀI 2: TRANG CHI TIẾT BOOK
+======================================================================
+
+5.1. Đề yêu cầu gì?
+
+Tạo View, Template và URL để hiển thị chi tiết một cuốn sách, gồm:
+- Tiêu đề (title).
+- Nhà xuất bản (publisher).
+- Ngày xuất bản (publication date).
+- Giá trị đánh giá chung (overall rating).
+- Tất cả ý kiến Review.
+- Tên người đánh giá.
+- Ngày tạo và ngày sửa Review (nếu có).
+
+URL ví dụ:
+
+    http://127.0.0.1:8000/books/1/
+
+Có thể dùng get_object_or_404() để lấy Book theo ID.
+Thêm nút Reviews trên trang danh sách sách để mở trang chi tiết.
+
+5.2. Xác định file cần sửa
+
+- reviews/views.py: lấy Book và Review, tính rating nếu cần, truyền context.
+- reviews/urls.py: khai báo books/<int:pk>/.
+- reviews/templates/reviews/book_details.html: hiển thị dữ liệu.
+- Template danh sách sách: thêm link Reviews.
+
+5.3. Kiến thức Model từ bài thực hành Bookr
+
+Trong bài thực hành Chương 2, các Model liên quan gồm:
+- Book: title, publication_date, isbn, publisher, contributors.
+- Publisher: name, website, email.
+- Contributor: first_names, last_names, email.
+- Review: content, rating, date_created, date_edited, creator, book.
+- Review.book là ForeignKey đến Book.
+- Review.creator liên kết đến Model User của Django.
+- Book.publisher là ForeignKey đến Publisher.
+- Book.contributors là quan hệ N-N với Contributor thông qua BookContributor.
+
+Nếu Model của project đang dùng tên trường khác, phải dùng đúng tên thật trong models.py.
+
+5.4. View chi tiết sách – mẫu
+
+reviews/views.py:
+
+    from django.shortcuts import render, get_object_or_404
+    from .models import Book
+
+    def book_details(request, pk):
+        book = get_object_or_404(Book, pk=pk)
+        reviews = book.review_set.all()
+
+        ratings = [review.rating for review in reviews]
+
+        if ratings:
+            overall_rating = round(sum(ratings) / len(ratings))
+        else:
+            overall_rating = None
+
+        context = {
+            'book': book,
+            'reviews': reviews,
+            'overall_rating': overall_rating,
+        }
+
+        return render(
+            request,
+            'reviews/book_details.html',
+            context
+        )
+
+Giải thích:
+- request: thông tin yêu cầu từ trình duyệt.
+- pk: ID của sách được truyền từ URL.
+- get_object_or_404: tìm sách; không có thì trả trang 404 thay vì lỗi server.
+- book.review_set.all(): lấy các Review liên quan đến Book theo quan hệ ForeignKey mặc định.
+- ratings: danh sách điểm Review.
+- if ratings: tránh chia cho 0 khi sách chưa có Review.
+- context: dữ liệu chuyển sang Template.
+- render(): ghép Template với dữ liệu và trả HTML.
+
+Ghi chú:
+- Phần bài tập yêu cầu hiển thị overall rating nhưng không nêu chính xác công thức tính ở phần đề. Cách tính trung bình ở trên là ví dụ hợp lý, đồng thời bài thực hành Chương 2 có hàm average_rating() để tính điểm trung bình.
+- Nếu project đã có hàm average_rating() trong utils.py thì có thể import và sử dụng hàm đó thay cho đoạn tính trực tiếp.
+
+5.5. URL chi tiết
+
+reviews/urls.py:
+
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        path(
+            'books/<int:pk>/',
+            views.book_details,
+            name='book_details'
+        ),
+    ]
+
+Project urls.py phải include reviews.urls:
+
+    path('', include('reviews.urls'))
+
+5.6. Template chi tiết
+
+Tạo file:
+
+    reviews/templates/reviews/book_details.html
+
+Code mẫu:
+
+    {% extends 'reviews/base.html' %}
+
+    {% block content %}
+    <h1>{{ book.title }}</h1>
+
+    <p>Publisher: {{ book.publisher }}</p>
+    <p>Publication date: {{ book.publication_date }}</p>
+    <p>Overall rating: {{ overall_rating }}</p>
+
+    <h2>Reviews</h2>
+
+    {% for review in reviews %}
+        <div>
+            <p>{{ review.content }}</p>
+            <p>Rating: {{ review.rating }}</p>
+            <p>Reviewer: {{ review.creator }}</p>
+            <p>Created: {{ review.date_created }}</p>
+
+            {% if review.date_edited %}
+                <p>Edited: {{ review.date_edited }}</p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No reviews yet.</p>
+    {% endfor %}
+    {% endblock %}
+
+Nếu base template của project nằm ở đường dẫn khác, sửa tên trong extends cho đúng.
+
+5.7. Thêm nút Reviews trong trang danh sách
+
+Trong vòng lặp hiển thị từng cuốn sách:
+
+    <a href="{% url 'book_details' item.book.pk %}">
+        Reviews
+    </a>
+
+Nếu biến vòng lặp là book thay vì item.book thì viết:
+
+    <a href="{% url 'book_details' book.pk %}">
+        Reviews
+    </a>
+
+Không dùng item.book nếu context của View không có cấu trúc item.
+
+5.8. Kiểm tra kết quả
+
+- Mở /books/ để xem danh sách.
+- Bấm Reviews của một cuốn sách.
+- URL phải có ID, ví dụ /books/1/.
+- Trang chi tiết phải hiện đúng Book ID đó.
+- Nếu Book không tồn tại, Django trả 404.
+- Nếu chưa có Review, trang vẫn hiển thị thông báo No reviews yet.
+
+======================================================================
+6. BÀI TẬP CHƯƠNG 4 – BÀI 1: BOOK SEARCH
+======================================================================
+
+6.1. Đề yêu cầu gì?
+
+Tạo SearchForm để nhận chuỗi tìm kiếm từ request.GET.
+Có hai phạm vi tìm kiếm:
+- Title: tìm trong tiêu đề sách.
+- Contributor: tìm trong first_names và last_names của Contributor.
+
+Điều kiện:
+- Chuỗi tìm kiếm không bắt buộc nhập.
+- Nếu có nhập thì tối thiểu 3 ký tự.
+- Kết quả hiển thị bằng Template search-results.html.
+- Có tìm kiếm nhanh ở góc trên bên phải trong base.html; tìm nhanh này chỉ tìm theo title.
+- Có form tìm kiếm trên trang Search Results cho phép chọn Title hoặc Contributor.
+- Tiêu đề trang hiển thị Search Results for <search text> khi có chuỗi hợp lệ.
+- Nếu không có kết quả thì hiện No results found.
+- Tên sách liên kết đến trang book_details.
+
+6.2. Cần sửa những file nào?
+
+- reviews/forms.py: tạo SearchForm.
+- reviews/views.py: tạo/cập nhật book_search.
+- reviews/urls.py: URL book-search/.
+- reviews/templates/reviews/search-results.html: kết quả tìm kiếm.
+- reviews/templates/reviews/base.html: form tìm kiếm nhanh và title block.
+
+6.3. Tạo SearchForm
+
+reviews/forms.py:
+
+    from django import forms
+
+    class SearchForm(forms.Form):
+        search = forms.CharField(
+            required=False,
+            min_length=3
+        )
+
+        search_in = forms.ChoiceField(
+            choices=[
+                ('title', 'Title'),
+                ('contributor', 'Contributor'),
+            ],
+            required=True
+        )
+
+Giải thích:
+- forms.Form: Form thường, không tự gắn vào một Model.
+- search: hộp nhập văn bản.
+- required=False: cho phép không nhập chuỗi.
+- min_length=3: nếu nhập thì phải đủ ít nhất 3 ký tự.
+- search_in: hộp chọn phạm vi.
+- choices: các lựa chọn được phép.
+- required=True: bắt buộc có lựa chọn Title hoặc Contributor.
+
+LƯU Ý QUAN TRỌNG VỀ ĐỀ:
+Đề vừa nói search_in là required, vừa nói form tìm kiếm nhanh ở base.html có thể không gửi search_in và cần mặc định là title. Hai điều này dễ gây xung đột: nếu ChoiceField bắt buộc mà request không gửi search_in thì Form có thể không hợp lệ.
+Cách xử lý an toàn khi giữ required=True:
+- Thêm hidden input search_in=title trong form tìm kiếm nhanh ở base.html.
+- Form trên trang Search Results vẫn dùng dropdown để người dùng chọn.
+Nếu giảng viên yêu cầu chính xác cách khác, ưu tiên cách được giảng viên hướng dẫn.
+
+6.4. View book_search
+
+Ví dụ dùng Model Book và Contributor của bài thực hành Bookr:
+
+    from django.shortcuts import render
+    from django.db.models import Q
+    from .models import Book, Contributor
+    from .forms import SearchForm
+
+    def book_search(request):
+        form = SearchForm(request.GET)
+        books = Book.objects.none()
+        search_text = ''
+
+        if form.is_valid():
+            search_text = form.cleaned_data.get('search', '').strip()
+            search_in = form.cleaned_data.get('search_in', 'title')
+
+            if search_text:
+                if search_in == 'title':
+                    books = Book.objects.filter(
+                        title__icontains=search_text
+                    )
+                else:
+                    contributors = Contributor.objects.filter(
+                        Q(first_names__icontains=search_text) |
+                        Q(last_names__icontains=search_text)
+                    )
+
+                    books = Book.objects.filter(
+                        contributors__in=contributors
+                    ).distinct()
+
+        context = {
+            'form': form,
+            'books': books,
+            'search_text': search_text,
+        }
+
+        return render(
+            request,
+            'reviews/search-results.html',
+            context
+        )
+
+Giải thích từng phần:
+- SearchForm(request.GET): nhận dữ liệu người dùng gửi bằng GET.
+- Book.objects.none(): tạo QuerySet rỗng ban đầu.
+- form.is_valid(): kiểm tra dữ liệu.
+- cleaned_data: chỉ đọc sau khi gọi is_valid() và Form hợp lệ.
+- strip(): bỏ khoảng trắng đầu/cuối.
+- search_in: phạm vi tìm kiếm.
+- title__icontains: tìm chuỗi con trong title, không phân biệt chữ hoa/thường.
+- Q(... ) | Q(...): điều kiện OR.
+- contributors__in: tìm Book có Contributor thuộc tập kết quả.
+- distinct(): loại trùng Book do có thể khớp nhiều Contributor.
+- render(): trả Template và dữ liệu.
+
+Nếu đề yêu cầu đúng cách làm trong tài liệu là duyệt từng Contributor và kết hợp kết quả, có thể viết dạng:
+
+    contributors = Contributor.objects.filter(
+        first_names__icontains=search_text
+    )
+
+    contributors_last = Contributor.objects.filter(
+        last_names__icontains=search_text
+    )
+
+    contributors = list(contributors) + list(contributors_last)
+
+    books = []
+    for contributor in contributors:
+        for book in contributor.book_set.all():
+            if book not in books:
+                books.append(book)
+
+Cách Q ở trên ngắn hơn; cách vòng lặp thể hiện đúng ý tưởng tách hai truy vấn và loại trùng như tài liệu bài tập.
+
+6.5. URL tìm kiếm
+
+reviews/urls.py:
+
+    path(
+        'book-search/',
+        views.book_search,
+        name='book_search'
+    )
+
+URL truy cập:
+
+    http://127.0.0.1:8000/book-search/
+
+6.6. Template search-results.html
+
+Tạo file:
+
+    reviews/templates/reviews/search-results.html
+
+Mẫu:
+
+    {% extends 'reviews/base.html' %}
+
+    {% block title %}
+        {% if search_text %}
+            Search Results for {{ search_text }}
+        {% else %}
+            Book Search
+        {% endif %}
+    {% endblock %}
+
+    {% block content %}
+    <h2>Search for Books</h2>
+
+    <form method="get">
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+    </form>
+
+    {% if search_text %}
+        <h3>
+            Search Results for <em>{{ search_text }}</em>
+        </h3>
+    {% endif %}
+
+    <ul class="list-group">
+        {% for book in books %}
+            <li class="list-group-item">
+                <a href="{% url 'book_details' book.pk %}">
+                    {{ book.title }}
+                </a>
+
+                <br>
+
+                {% for contributor in book.contributors.all %}
+                    {{ contributor.last_names }}
+                    {{ contributor.first_names }}
+                {% endfor %}
+            </li>
+        {% empty %}
+            {% if search_text %}
+                <li class="list-group-item">
+                    No results found.
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    {% endblock %}
+
+6.7. Thêm form tìm kiếm nhanh vào base.html
+
+Trong base.html, đặt form ở khu vực thanh điều hướng:
+
+    <form method="get" action="{% url 'book_search' %}">
+        <input
+            type="text"
+            name="search"
+            value="{{ search_text|default:'' }}"
+            minlength="3"
+            placeholder="Search books"
+        >
+
+        <input
+            type="hidden"
+            name="search_in"
+            value="title"
+        >
+
+        <button type="submit">Search</button>
+    </form>
+
+Giải thích:
+- method=get: dữ liệu xuất hiện trên URL.
+- action: gửi đến URL book_search.
+- name=search: phải trùng tên trường SearchForm.
+- value: giữ lại nội dung tìm kiếm.
+- minlength=3: kiểm tra tối thiểu ở trình duyệt.
+- hidden search_in=title: báo cho SearchForm biết tìm theo tiêu đề.
+
+6.8. Các lỗi dễ gặp
+
+- Form không hợp lệ vì thiếu search_in -> kiểm tra hidden input hoặc required.
+- Dùng request.POST trong khi đề yêu cầu request.GET -> sai phương thức.
+- Truy cập cleaned_data trước is_valid() -> sai thứ tự.
+- Gõ title__contains thay vì title__icontains -> khác yêu cầu tìm không phân biệt hoa/thường.
+- Quên distinct() -> có thể xuất hiện sách trùng.
+- Template không tìm thấy -> kiểm tra đúng đường dẫn reviews/templates/reviews/.
+- Không hiện No results found -> kiểm tra vòng for và empty.
+- Link chi tiết sai -> kiểm tra URL name book_details và tham số pk.
+
+======================================================================
+7. BÀI TẬP CHƯƠNG 4 – BÀI 2: PUBLISHERFORM THÊM/SỬA
+======================================================================
+
+7.1. Đề yêu cầu gì?
+
+Tích hợp form tạo mới và chỉnh sửa Publisher vào template chung của website:
+- Có template instance-form.html.
+- Template kế thừa base.html.
+- Nếu instance=None thì tiêu đề New Publisher.
+- Nếu có instance thì tiêu đề Editing Publisher <Tên publisher>.
+- Form dùng method POST.
+- Có csrf_token.
+- Hiển thị Django Form bằng form.as_p.
+- Nút Create khi thêm mới, Save khi chỉnh sửa.
+- View publisher_edit truyền form, instance/publisher và model_type.
+- base.html hiển thị Django messages bằng Bootstrap.
+
+7.2. Tạo ModelForm
+
+reviews/forms.py:
+
+    from django import forms
+    from .models import Publisher
+
+    class PublisherForm(forms.ModelForm):
+        class Meta:
+            model = Publisher
+            fields = '__all__'
+
+Nếu đề yêu cầu chỉ cho sửa một số trường, dùng tuple:
+
+    fields = ('name', 'website', 'email')
+
+Hoặc loại trừ trường:
+
+    exclude = ('field_name',)
+
+7.3. View thêm/sửa Publisher
+
+reviews/views.py:
+
+    from django.shortcuts import render, get_object_or_404, redirect
+    from django.contrib import messages
+    from .models import Publisher
+    from .forms import PublisherForm
+
+    def publisher_edit(request, pk=None):
+        if pk is not None:
+            publisher = get_object_or_404(Publisher, pk=pk)
+        else:
+            publisher = None
+
+        if request.method == 'POST':
+            form = PublisherForm(
+                request.POST,
+                instance=publisher
+            )
+
+            if form.is_valid():
+                saved_publisher = form.save()
+
+                messages.success(
+                    request,
+                    'Publisher ' + str(saved_publisher) + ' saved successfully.'
+                )
+
+                return redirect('publisher_list')
+
+        else:
+            form = PublisherForm(instance=publisher)
+
+        context = {
+            'form': form,
+            'instance': publisher,
+            'model_type': 'Publisher',
+        }
+
+        return render(
+            request,
+            'reviews/instance-form.html',
+            context
+        )
+
+Giải thích:
+- pk=None: nếu không có ID thì thêm mới.
+- Nếu có pk: lấy Publisher cũ.
+- GET: tạo Form trống hoặc điền dữ liệu cũ.
+- POST: nhận dữ liệu người dùng gửi.
+- instance=publisher: xác định đang sửa bản ghi nào.
+- form.is_valid(): kiểm tra dữ liệu.
+- form.save(): lưu vào CSDL.
+- messages.success(): tạo thông báo thành công.
+- redirect(): chuyển về trang danh sách.
+- publisher_list là tên URL ví dụ; phải thay bằng URL name thật trong project.
+
+7.4. Tạo Template instance-form.html
+
+Đường dẫn:
+
+    reviews/templates/reviews/instance-form.html
+
+Code:
+
+    {% extends 'reviews/base.html' %}
+
+    {% block title %}
+        {% if instance %}
+            Editing {{ model_type }} {{ instance }}
+        {% else %}
+            New {{ model_type }}
+        {% endif %}
+    {% endblock %}
+
+    {% block content %}
+        {% if instance %}
+            <h2>
+                Editing {{ model_type }}
+                <em>{{ instance }}</em>
+            </h2>
+        {% else %}
+            <h2>New {{ model_type }}</h2>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            {% if instance %}
+                <button type="submit" class="btn btn-primary">
+                    Save
+                </button>
+            {% else %}
+                <button type="submit" class="btn btn-primary">
+                    Create
+                </button>
+            {% endif %}
+        </form>
+    {% endblock %}
+
+Giải thích:
+- extends: kế thừa bố cục từ base.html.
+- block title: thay tiêu đề tab trình duyệt.
+- block content: nội dung riêng của trang.
+- instance có dữ liệu -> chế độ sửa.
+- instance None -> chế độ thêm.
+- csrf_token: bảo vệ Form POST.
+- form.as_p: xuất các trường Form theo từng đoạn.
+- button submit: gửi Form lên View.
+
+7.5. Hiển thị messages trong base.html
+
+Trong base.html, đặt đoạn này trước block content:
+
+    <div class="container-fluid">
+        {% for message in messages %}
+            <div
+                class="alert alert-{% if message.level_tag == 'error' %}danger{% else %}{{ message.level_tag }}{% endif %}"
+                role="alert"
+            >
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+Lưu ý:
+- messages phải có context processor mặc định của Django.
+- Nếu không hiện message, kiểm tra cấu hình messages trong settings.py và việc import messages trong View.
+- Đề bài mẫu dùng Bootstrap; nếu project chưa tích hợp Bootstrap thì class chỉ là tên CSS, giao diện sẽ không tự đẹp nếu thiếu Bootstrap.
+
+7.6. URL thêm và sửa
+
+Ví dụ:
+
+    path(
+        'publishers/new/',
+        views.publisher_edit,
+        name='publisher_create'
+    ),
+
+    path(
+        'publishers/<int:pk>/',
+        views.publisher_edit,
+        name='publisher_edit'
+    ),
+
+Hai URL cùng gọi một View:
+- /publishers/new/ -> không truyền pk, tạo mới.
+- /publishers/1/ -> truyền pk=1, chỉnh sửa Publisher ID 1.
+
+7.7. Phân biệt Form thêm và Form sửa
+
+THÊM:
+- publisher=None.
+- GET -> PublisherForm(instance=None), Form trống.
+- POST -> PublisherForm(request.POST, instance=None).
+- save() -> tạo dòng mới.
+
+SỬA:
+- publisher là đối tượng đã lấy từ DB.
+- GET -> PublisherForm(instance=publisher), Form có dữ liệu cũ.
+- POST -> PublisherForm(request.POST, instance=publisher).
+- save() -> cập nhật dòng cũ.
+
+Mẹo nhớ:
+instance=None = tạo mới.
+instance=đối_tượng = sửa đối tượng đó.
+
+======================================================================
+8. BÀI TẬP CHƯƠNG 4 – BÀI 3: REVIEWFORM THÊM/SỬA THEO BOOK
+======================================================================
+
+8.1. Đề yêu cầu gì?
+
+- Tạo ReviewForm kế thừa ModelForm.
+- Model là Review.
+- Loại trừ date_edited và book khỏi Form.
+- Trường rating phải là IntegerField, min_value=0, max_value=5.
+- Tạo View review_edit(request, book_pk, review_pk=None).
+- Lấy Book theo book_pk.
+- Nếu review_pk có giá trị thì lấy Review thuộc chính Book đó.
+- POST: Form nhận request.POST và instance.
+- Lưu bằng commit=False.
+- Gán Book cho Review.
+- Nếu đang sửa, cập nhật date_edited bằng timezone.now().
+- Lưu Review.
+- messages.success.
+- Chuyển về trang book_detail.
+- Dùng lại instance-form.html.
+- Có thông tin Book liên quan.
+- Có URL tạo Review và URL sửa Review.
+- Trang Book Details có link Add review và Edit Review.
+
+8.2. ReviewForm
+
+reviews/forms.py:
+
+    from django import forms
+    from .models import Review
+
+    class ReviewForm(forms.ModelForm):
+        rating = forms.IntegerField(
+            min_value=0,
+            max_value=5
+        )
+
+        class Meta:
+            model = Review
+            exclude = ('date_edited', 'book')
+
+Giải thích:
+- ModelForm tự tạo trường từ Model.
+- rating được khai báo lại để thêm giới hạn 0 đến 5.
+- exclude loại các trường không cho người dùng nhập.
+- book được View tự gán vì Review đang nằm trong ngữ cảnh một Book cụ thể.
+- date_edited được View tự cập nhật khi sửa.
+
+8.3. View review_edit
+
+reviews/views.py:
+
+    from django.shortcuts import (
+        render,
+        get_object_or_404,
+        redirect
+    )
+    from django.contrib import messages
+    from django.utils import timezone
+
+    from .models import Book, Review
+    from .forms import ReviewForm
+
+    def review_edit(request, book_pk, review_pk=None):
+        book = get_object_or_404(Book, pk=book_pk)
+
+        if review_pk is not None:
+            review = get_object_or_404(
+                Review,
+                pk=review_pk,
+                book=book
+            )
+        else:
+            review = None
+
+        if request.method == 'POST':
+            form = ReviewForm(
+                request.POST,
+                instance=review
+            )
+
+            if form.is_valid():
+                saved_review = form.save(commit=False)
+                saved_review.book = book
+
+                if review is not None:
+                    saved_review.date_edited = timezone.now()
+
+                saved_review.save()
+
+                messages.success(
+                    request,
+                    'Review for ' + book.title + ' created'
+                )
+
+                return redirect(
+                    'book_details',
+                    pk=book.pk
+                )
+
+        else:
+            form = ReviewForm(instance=review)
+
+        context = {
+            'form': form,
+            'instance': review,
+            'model_type': 'Review',
+            'related_model_type': 'Book',
+            'related_instance': book,
+        }
+
+        return render(
+            request,
+            'reviews/instance-form.html',
+            context
+        )
+
+Giải thích:
+- book_pk: ID của Book, bắt buộc.
+- review_pk=None: nếu không có ID Review thì thêm mới.
+- get_object_or_404(Review, pk=review_pk, book=book): bảo đảm Review thuộc đúng Book đang mở.
+- form.save(commit=False): tạo/cập nhật đối tượng Python nhưng chưa ghi xuống DB.
+- saved_review.book=book: gán quan hệ Book.
+- review is not None: đang sửa Review cũ.
+- timezone.now(): lấy thời điểm hiện tại theo Django.
+- saved_review.save(): ghi vào DB.
+- redirect('book_details', pk=book.pk): trở về chi tiết Book.
+- related_model_type và related_instance: hiển thị thông tin Book liên quan trên Form.
+
+GHI CHÚ:
+Đề bài nêu thông điệp dạng “Review for <tiêu đề cuốn sách> created”. Nếu đang sửa, có thể điều chỉnh nội dung message theo đúng câu chữ giảng viên yêu cầu; phần quan trọng là dùng tiêu đề Book làm thông tin trong message.
+
+8.4. Bổ sung phần Book liên quan trong instance-form.html
+
+Đặt dưới h2:
+
+    {% if related_model_type and related_instance %}
+        <p>
+            For {{ related_model_type }}
+            <em>{{ related_instance }}</em>
+        </p>
+    {% endif %}
+
+Đoạn này chỉ xuất hiện khi View truyền cả hai biến.
+
+8.5. URL tạo và sửa Review
+
+reviews/urls.py:
+
+    path(
+        'books/<int:book_pk>/reviews/new/',
+        views.review_edit,
+        name='review_create'
+    ),
+
+    path(
+        'books/<int:book_pk>/reviews/<int:review_pk>/',
+        views.review_edit,
+        name='review_edit'
+    ),
+
+Ví dụ:
+- /books/1/reviews/new/ -> tạo Review cho Book 1.
+- /books/1/reviews/3/ -> sửa Review 3 thuộc Book 1.
+
+8.6. Link Add Review trong book_detail.html
+
+    <a
+        class="btn btn-primary"
+        href="{% url 'review_create' book.pk %}"
+    >
+        Add review
+    </a>
+
+8.7. Link Edit Review trong vòng lặp
+
+    {% for review in reviews %}
+        <p>{{ review.content }}</p>
+
+        <a
+            href="{% url 'review_edit' book.pk review.pk %}"
+        >
+            Edit Review
+        </a>
+    {% endfor %}
+
+Lưu ý:
+- Link sửa phải nằm trong vòng lặp vì mỗi Review có ID riêng.
+- URL sửa cần hai tham số: book.pk và review.pk.
+- Nếu URL pattern yêu cầu tên tham số khác, phải truyền đúng thứ tự hoặc dùng keyword argument.
+
+8.8. Vì sao dùng chung instance-form.html?
+
+Publisher và Review đều có thao tác:
+- Thêm mới.
+- Chỉnh sửa.
+- Hiển thị tiêu đề khác nhau.
+- Hiển thị Form.
+- Có nút Create hoặc Save.
+
+Do đó có thể dùng một Template chung, chỉ truyền context khác nhau.
+
+======================================================================
+9. MẪU ÁP DỤNG VÀO CÁC ĐỀ KIỂM TRA THỰC HÀNH
+======================================================================
+
+MỤC TIÊU:
+Không học thuộc nguyên xi tên Model của từng đề. Học cách đổi tên bảng, tên trường và quan hệ theo đề mới.
+
+----------------------------------------------------------------------
+9A. ĐỀ MÃ 105 – QUẢN LÝ BÀI VIẾT
+----------------------------------------------------------------------
+
+9A.1. Những yêu cầu nhìn thấy trong ảnh
+
+Project: TGK
+App: qlbaiviet
+
+Ba bảng:
+1. BaiViet:
+   - id: khóa chính, số nguyên tự tăng.
+   - TieuDe: tối đa 250 ký tự, bắt buộc.
+   - NoiDung: văn bản dài, không bắt buộc.
+   - NgayTao: ngày tạo bài viết, bắt buộc.
+   - NguoiTao: liên kết đến auth_user, bắt buộc.
+   - ChuyenMuc: quan hệ nhiều-nhiều đến ChuyenMuc qua BaiVietChuyenMuc.
+2. ChuyenMuc:
+   - id: khóa chính tự tăng.
+   - Ten: tối đa 200 ký tự, bắt buộc.
+3. BaiVietChuyenMuc:
+   - id: khóa chính tự tăng.
+   - BaiViet: khóa ngoại đến BaiViet.
+   - ChuyenMuc: khóa ngoại đến ChuyenMuc.
+   - ThuTu: số nguyên, thứ tự sắp xếp.
+
+Khi xóa bài viết hoặc chuyên mục, phải xóa các dòng liên quan trong BaiVietChuyenMuc.
+
+Các yêu cầu nhìn thấy:
+- Tạo Project TGK, App qlbaiviet.
+- Tạo Model và bảng SQLite.
+- Mỗi bảng ít nhất 5 bản ghi.
+- Tạo View chi tiết bài viết tên xembaiviet, tham số idbaiviet.
+- Template xembaiviet.html hiển thị Ngày tạo, Nội dung, Người tạo.
+- Tạo Template danh sách dsbaiviet.html.
+- View dsbaiviet xuất danh sách.
+- URL /dsbaiviet/.
+- Tạo BaiVietForm.
+- View baiviet nhận idbaiviet để thêm mới hoặc chỉnh sửa.
+- Lưu thành công thì thông báo và chuyển về danh sách.
+
+9A.2. Model code
+
+qlbaiviet/models.py:
+
+    from django.db import models
+    from django.conf import settings
+
+    class ChuyenMuc(models.Model):
+        id = models.AutoField(primary_key=True)
+        Ten = models.CharField(max_length=200)
+
+        def __str__(self):
+            return self.Ten
+
+    class BaiViet(models.Model):
+        id = models.AutoField(primary_key=True)
+        TieuDe = models.CharField(max_length=250)
+        NoiDung = models.TextField(blank=True)
+        NgayTao = models.DateField()
+
+        # Đề yêu cầu liên kết auth_user nhưng ảnh không nêu on_delete.
+        # CASCADE dưới đây là lựa chọn để Model hoạt động; kiểm tra hướng dẫn của giảng viên.
+        NguoiTao = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE
+        )
+
+        ChuyenMuc = models.ManyToManyField(
+            ChuyenMuc,
+            through='BaiVietChuyenMuc'
+        )
+
+        def __str__(self):
+            return self.TieuDe
+
+    class BaiVietChuyenMuc(models.Model):
+        id = models.AutoField(primary_key=True)
+
+        BaiViet = models.ForeignKey(
+            BaiViet,
+            on_delete=models.CASCADE
+        )
+
+        ChuyenMuc = models.ForeignKey(
+            ChuyenMuc,
+            on_delete=models.CASCADE
+        )
+
+        ThuTu = models.IntegerField()
+
+Giải thích:
+- NguoiTao liên kết bảng người dùng mặc định của Django.
+- BaiViet.ChuyenMuc là N-N.
+- through='BaiVietChuyenMuc' chỉ rõ bảng trung gian.
+- Hai ForeignKey trong bảng trung gian dùng CASCADE để xóa liên kết khi bài viết hoặc chuyên mục bị xóa.
+- ThuTu là trường bổ sung của bảng trung gian.
+
+LƯU Ý QUAN TRỌNG:
+ModelForm không tự giải quyết mọi trường hợp bảng ManyToMany có through Model tùy chỉnh với trường bổ sung bắt buộc như ThuTu. Nếu đề yêu cầu gán chuyên mục và thứ tự, phải tạo bản ghi BaiVietChuyenMuc riêng. Đừng nghĩ form.save() tự tạo đủ ThuTu.
+
+9A.3. Migration
+
+    python manage.py makemigrations qlbaiviet
+    python manage.py migrate
+
+9A.4. Tạo dữ liệu mẫu trong shell
+
+    python manage.py shell
+
+    from qlbaiviet.models import ChuyenMuc, BaiViet, BaiVietChuyenMuc
+    from django.contrib.auth import get_user_model
+    from datetime import date
+
+    User = get_user_model()
+    user = User.objects.first()
+
+    cm1 = ChuyenMuc.objects.create(Ten='Công nghệ')
+    cm2 = ChuyenMuc.objects.create(Ten='Kinh doanh')
+
+    bv1 = BaiViet.objects.create(
+        TieuDe='Ứng dụng Django',
+        NoiDung='Bài viết giới thiệu Django',
+        NgayTao=date.today(),
+        NguoiTao=user
+    )
+
+    BaiVietChuyenMuc.objects.create(
+        BaiViet=bv1,
+        ChuyenMuc=cm1,
+        ThuTu=1
+    )
+
+Nếu User.objects.first() trả về None thì cần tạo User trước. Không thể gán NguoiTao=None nếu trường bắt buộc.
+
+Tạo đủ ít nhất 5 bản ghi cho từng bảng nếu đề yêu cầu:
+- 5 ChuyenMuc.
+- 5 BaiViet.
+- 5 BaiVietChuyenMuc.
+Không chỉ tạo 5 BaiViet rồi bỏ quên bảng trung gian nếu đề yêu cầu tối thiểu cho mọi bảng.
+
+9A.5. View chi tiết xembaiviet
+
+qlbaiviet/views.py:
+
+    from django.shortcuts import render, get_object_or_404
+    from .models import BaiViet
+
+    def xembaiviet(request, idbaiviet):
+        baiviet = get_object_or_404(
+            BaiViet,
+            id=idbaiviet
+        )
+
+        return render(
+            request,
+            'qlbaiviet/xembaiviet.html',
+            {'baiviet': baiviet}
+        )
+
+Template qlbaiviet/templates/qlbaiviet/xembaiviet.html:
+
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ baiviet.TieuDe }}</title>
+    </head>
+    <body>
+        <h1>{{ baiviet.TieuDe }}</h1>
+
+        <p>Ngày tạo: {{ baiviet.NgayTao }}</p>
+        <p>Nội dung: {{ baiviet.NoiDung }}</p>
+        <p>Người tạo: {{ baiviet.NguoiTao }}</p>
+    </body>
+    </html>
+
+9A.6. View danh sách dsbaiviet
+
+    def dsbaiviet(request):
+        baiviets = BaiViet.objects.all()
+
+        return render(
+            request,
+            'qlbaiviet/dsbaiviet.html',
+            {'baiviets': baiviets}
+        )
+
+Template dsbaiviet.html:
+
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <title>DANH SÁCH BÀI VIẾT</title>
+    </head>
+    <body>
+        <h1>DANH SÁCH BÀI VIẾT</h1>
+
+        {% for baiviet in baiviets %}
+            <div>
+                <h3>
+                    <a href="{% url 'xembaiviet' baiviet.id %}">
+                        {{ baiviet.TieuDe }}
+                    </a>
+                </h3>
+
+                <p>Chuyên mục:
+                    {% for cm in baiviet.ChuyenMuc.all %}
+                        {{ cm.Ten }}
+                    {% empty %}
+                        Chưa có chuyên mục
+                    {% endfor %}
+                </p>
+
+                <a href="{% url 'baiviet_sua' baiviet.id %}">
+                    Sửa bài viết
+                </a>
+            </div>
+        {% empty %}
+            <p>Chưa có bài viết.</p>
+        {% endfor %}
+    </body>
+    </html>
+
+9A.7. URL
+
+qlbaiviet/urls.py:
+
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        path(
+            'dsbaiviet/',
+            views.dsbaiviet,
+            name='dsbaiviet'
+        ),
+
+        path(
+            'xembaiviet/<int:idbaiviet>/',
+            views.xembaiviet,
+            name='xembaiviet'
+        ),
+    ]
+
+Project urls.py:
+
+    path('', include('qlbaiviet.urls'))
+
+Nếu đề yêu cầu URL chi tiết theo mẫu khác, sửa path theo đúng đề. Không tự đoán URL khi đề đã ghi rõ.
+
+9A.8. BaiVietForm
+
+qlbaiviet/forms.py:
+
+    from django import forms
+    from .models import BaiViet
+
+    class BaiVietForm(forms.ModelForm):
+        class Meta:
+            model = BaiViet
+            fields = '__all__'
+
+Ghi chú:
+- fields='__all__' nghĩa là các trường có thể đưa vào Form.
+- Quan hệ ManyToMany dùng through Model có thể không được ModelForm tự tạo trường lựa chọn.
+- Nếu đề cần nhập ThuTu và chuyên mục thì phải có Form/logic cho bảng trung gian riêng.
+
+9A.9. View thêm/sửa bài viết
+
+    from django.shortcuts import render, get_object_or_404, redirect
+    from django.contrib import messages
+    from .models import BaiViet
+    from .forms import BaiVietForm
+
+    def baiviet(request, idbaiviet=None):
+        if idbaiviet is not None:
+            instance = get_object_or_404(
+                BaiViet,
+                id=idbaiviet
+            )
+        else:
+            instance = None
+
+        is_new = instance is None
+
+        if request.method == 'POST':
+            form = BaiVietForm(
+                request.POST,
+                instance=instance
+            )
+
+            if form.is_valid():
+                saved_baiviet = form.save()
+
+                if is_new:
+                    messages.success(
+                        request,
+                        'Bài viết ' + saved_baiviet.TieuDe + ' đã được thêm thành công'
+                    )
+                else:
+                    messages.success(
+                        request,
+                        'Thông tin chỉnh sửa bài viết ' + saved_baiviet.TieuDe + ' đã được lưu lại'
+                    )
+
+                return redirect('dsbaiviet')
+
+        else:
+            form = BaiVietForm(instance=instance)
+
+        return render(
+            request,
+            'qlbaiviet/baiviet.html',
+            {
+                'form': form,
+                'instance': instance
+            }
+        )
+
+9A.10. Template thêm/sửa baiviet.html
+
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <title>
+            {% if instance %}
+                SỬA THÔNG TIN BÀI VIẾT
+            {% else %}
+                THÊM BÀI VIẾT MỚI
+            {% endif %}
+        </title>
+    </head>
+    <body>
+        {% if instance %}
+            <h1>SỬA THÔNG TIN BÀI VIẾT</h1>
+        {% else %}
+            <h1>THÊM BÀI VIẾT MỚI</h1>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Lưu</button>
+        </form>
+    </body>
+    </html>
+
+9A.11. URL thêm/sửa
+
+Thêm vào urlpatterns:
+
+    path(
+        'baiviet/',
+        views.baiviet,
+        name='baiviet_moi'
+    ),
+
+    path(
+        'baiviet/<int:idbaiviet>/',
+        views.baiviet,
+        name='baiviet_sua'
+    ),
+
+GET /baiviet/ -> Form trống.
+GET /baiviet/1/ -> Form có dữ liệu bài viết ID 1.
+POST -> kiểm tra và lưu.
+
+----------------------------------------------------------------------
+9B. ĐỀ MÃ 109 – QUẢN LÝ KHO HÀNG
+----------------------------------------------------------------------
+
+9B.1. Những nội dung nhìn thấy trong ảnh
+
+Project: KTGK
+App: qlkhohang
+
+Ba bảng:
+1. Kho:
+   - id: khóa chính số nguyên tự tăng.
+   - Ten: tên kho, tối đa 100 ký tự, bắt buộc.
+   - DiaChi: địa chỉ kho, tối đa 255 ký tự, không bắt buộc.
+2. HangHoa:
+   - id: khóa chính số nguyên tự tăng.
+   - Ten: tên hàng hóa, tối đa 255 ký tự, bắt buộc.
+   - MoTa: mô tả dài, không bắt buộc.
+   - Kho: quan hệ N-N với Kho qua KhoHangHoa.
+3. KhoHangHoa:
+   - id: khóa chính số nguyên tự tăng.
+   - HangHoa: khóa ngoại đến HangHoa.
+   - Kho: khóa ngoại đến Kho.
+
+Khi xóa Kho hoặc HangHoa, các dòng liên quan trong KhoHangHoa phải bị xóa.
+
+Yêu cầu nhìn thấy:
+- Tạo Project KTGK, App qlkhohang.
+- Tạo Model và SQLite.
+- Mỗi bảng ít nhất 5 bản ghi.
+- Cấu hình Admin.
+- Tạo Superuser username stockadmin.
+- Mật khẩu theo mẫu đề: ltw@<Tên sinh viên>05.
+- Đăng ký Model Kho.
+- Danh sách kho thể hiện theo cấu trúc <id> - <Tên kho>.
+
+Ảnh chỉ cung cấp trang 1/2 nên không suy đoán các yêu cầu ở trang 2.
+
+9B.2. Model code
+
+qlkhohang/models.py:
+
+    from django.db import models
+
+    class Kho(models.Model):
+        id = models.AutoField(primary_key=True)
+
+        Ten = models.CharField(max_length=100)
+
+        DiaChi = models.CharField(
+            max_length=255,
+            blank=True
+        )
+
+        def __str__(self):
+            return f'{self.id} - {self.Ten}'
+
+    class HangHoa(models.Model):
+        id = models.AutoField(primary_key=True)
+
+        Ten = models.CharField(max_length=255)
+
+        MoTa = models.TextField(blank=True)
+
+        Kho = models.ManyToManyField(
+            Kho,
+            through='KhoHangHoa'
+        )
+
+        def __str__(self):
+            return self.Ten
+
+    class KhoHangHoa(models.Model):
+        id = models.AutoField(primary_key=True)
+
+        HangHoa = models.ForeignKey(
+            HangHoa,
+            on_delete=models.CASCADE
+        )
+
+        Kho = models.ForeignKey(
+            Kho,
+            on_delete=models.CASCADE
+        )
+
+Giải thích:
+- Kho có thể chứa nhiều HangHoa.
+- HangHoa có thể nằm ở nhiều Kho.
+- Đây là N-N nên dùng ManyToManyField.
+- through chỉ bảng trung gian KhoHangHoa.
+- Hai FK trong KhoHangHoa dùng CASCADE theo yêu cầu xóa liên kết.
+- DiaChi và MoTa có blank=True vì đề ghi không bắt buộc.
+
+9B.3. Migration
+
+    python manage.py makemigrations qlkhohang
+    python manage.py migrate
+
+9B.4. Cấu hình Admin
+
+qlkhohang/admin.py:
+
+    from django.contrib import admin
+    from .models import Kho
+
+    @admin.register(Kho)
+    class KhoAdmin(admin.ModelAdmin):
+        list_display = ('id', 'Ten')
+
+Dòng list_display giúp hiển thị cột ID và Tên.
+Phương thức __str__ trong Model Kho giúp biểu diễn một kho theo dạng “id - tên” khi Django cần hiển thị tên đối tượng.
+
+Nếu đề chỉ yêu cầu đăng ký đơn giản:
+
+    admin.site.register(Kho)
+
+Nhưng nếu yêu cầu rõ cột hiển thị thì nên dùng ModelAdmin.list_display.
+
+9B.5. Tạo Superuser
+
+Cách tương tác:
+
+    python manage.py createsuperuser
+
+Nhập:
+- Username: stockadmin
+- Email: theo yêu cầu hoặc bỏ trống nếu được phép.
+- Password: nhập theo đúng mẫu trong đề, thay <Tên sinh viên> bằng thông tin của mình.
+
+Không ghi mật khẩu thật vào tài liệu chia sẻ công khai.
+
+9B.6. Nhập dữ liệu và liên kết N-N
+
+    python manage.py shell
+
+    from qlkhohang.models import Kho, HangHoa, KhoHangHoa
+
+    kho1 = Kho.objects.create(
+        Ten='Kho trung tâm',
+        DiaChi='Địa chỉ kho 1'
+    )
+
+    hang1 = HangHoa.objects.create(
+        Ten='Bàn phím',
+        MoTa='Bàn phím máy tính'
+    )
+
+    KhoHangHoa.objects.create(
+        HangHoa=hang1,
+        Kho=kho1
+    )
+
+Để tạo đủ 5 bản ghi:
+- Tạo ít nhất 5 Kho.
+- Tạo ít nhất 5 HangHoa.
+- Tạo các dòng KhoHangHoa để liên kết hàng hóa với kho.
+Nếu đề yêu cầu mỗi bảng 5 bản ghi thì cần kiểm tra cả bảng trung gian.
+
+9B.7. Kiểm tra quan hệ
+
+Lấy tất cả kho:
+
+    Kho.objects.all()
+
+Lấy tất cả hàng hóa:
+
+    HangHoa.objects.all()
+
+Lấy kho mà hàng hóa ID 1 đang nằm:
+
+    hang = HangHoa.objects.get(id=1)
+    hang.Kho.all()
+
+Lấy hàng hóa trong kho ID 1:
+
+    kho = Kho.objects.get(id=1)
+    kho.hanghoa_set.all()
+
+Tên reverse accessor mặc định có thể được Django tạo từ tên Model. Nếu chưa chắc, truy vấn qua bảng trung gian:
+
+    KhoHangHoa.objects.filter(Kho=kho)
+
+----------------------------------------------------------------------
+9C. ĐỀ MÃ 111 – QUẢN LÝ BÁN SÁCH
+----------------------------------------------------------------------
+
+9C.1. Những yêu cầu nhìn thấy trong hai ảnh
+
+Project: bookstore
+App: store
+
+Trang chủ:
+- URL gốc / hiển thị trang chào mừng.
+- Dùng Template base.html.
+- Tiêu đề: Welcome to the Online Bookstore.
+- Thanh menu ngang gồm:
+  + Trang chủ.
+  + Quản lý sách.
+  + DS đơn hàng.
+  + Thêm khách hàng.
+- Có Footer: © 2025 Django Bookstore App.
+- Có thể dùng Bootstrap Navbar.
+
+Ba bảng:
+
+Book:
+- Title: tối đa 200 ký tự, bắt buộc.
+- Author: tối đa 255 ký tự, bắt buộc.
+- Price: kiểu số thập phân, bắt buộc.
+- Stock: số nguyên.
+- Published_date: ngày tháng.
+
+Customer:
+- Name: tối đa 100 ký tự, bắt buộc.
+- Email: email khách hàng, bắt buộc.
+- Phone: tối đa 15 ký tự.
+- Address: tối đa 255 ký tự.
+
+Order:
+- Customer: FK đến Customer; xóa Customer thì xóa đơn hàng liên quan.
+- Book: FK đến Book; chỉ xóa Book nếu không còn đơn hàng liên quan.
+- Quantity: số nguyên.
+- Order_date: ngày tháng.
+- Total_price: số thập phân.
+
+Yêu cầu:
+- Mỗi bảng ít nhất 5 bản ghi.
+- Admin quản lý Book.
+- Danh sách sách hiển thị Title, Author, Price, Stock.
+- Tìm kiếm theo Title và Author.
+- Danh sách đơn hàng hiển thị Customer, Book, Quantity, Total_price, Order_date.
+- URL danh sách đơn hàng /orders/.
+- CustomerForm dùng ModelForm.
+- View edit_customer nhận ID tùy chọn: có ID thì sửa, không có thì thêm.
+- Lưu thành công thì hiện thông báo và chuyển về trang Danh sách đơn hàng.
+
+9C.2. Model code
+
+store/models.py:
+
+    from django.db import models
+
+    class Book(models.Model):
+        Title = models.CharField(max_length=200)
+        Author = models.CharField(max_length=255)
+
+        Price = models.DecimalField(
+            max_digits=10,
+            decimal_places=2
+        )
+
+        Stock = models.IntegerField()
+        Published_date = models.DateField()
+
+        def __str__(self):
+            return self.Title
+
+    class Customer(models.Model):
+        Name = models.CharField(max_length=100)
+        Email = models.EmailField()
+        Phone = models.CharField(max_length=15)
+        Address = models.CharField(max_length=255)
+
+        def __str__(self):
+            return self.Name
+
+    class Order(models.Model):
+        Customer = models.ForeignKey(
+            Customer,
+            on_delete=models.CASCADE
+        )
+
+        Book = models.ForeignKey(
+            Book,
+            on_delete=models.PROTECT
+        )
+
+        Quantity = models.IntegerField()
+        Order_date = models.DateField()
+
+        Total_price = models.DecimalField(
+            max_digits=12,
+            decimal_places=2
+        )
+
+        def __str__(self):
+            return f'Order {self.id}'
+
+Giải thích:
+- Customer FK CASCADE: xóa khách hàng thì đơn hàng của khách hàng bị xóa.
+- Book FK PROTECT: không cho xóa sách nếu còn đơn hàng tham chiếu.
+- Price và Total_price dùng DecimalField cho dữ liệu tiền.
+- max_digits và decimal_places là tham số cần chọn vì đề chỉ nói kiểu số thập phân mà không chỉ rõ độ chính xác. Ví dụ 10,2 và 12,2 ở trên là lựa chọn minh họa; nếu giảng viên có quy định khác thì dùng theo giảng viên.
+
+9C.3. Migration và tạo dữ liệu
+
+    python manage.py makemigrations store
+    python manage.py migrate
+
+Tạo dữ liệu mẫu trong shell:
+
+    python manage.py shell
+
+    from store.models import Book, Customer, Order
+    from datetime import date
+
+    b1 = Book.objects.create(
+        Title='Django Cơ Bản',
+        Author='Nguyen Van A',
+        Price=120000,
+        Stock=20,
+        Published_date=date(2025, 1, 10)
+    )
+
+    c1 = Customer.objects.create(
+        Name='Tran Thi B',
+        Email='b@example.com',
+        Phone='0900000001',
+        Address='Da Nang'
+    )
+
+    Order.objects.create(
+        Customer=c1,
+        Book=b1,
+        Quantity=2,
+        Order_date=date.today(),
+        Total_price=240000
+    )
+
+Đây là một bộ ví dụ 1 Book, 1 Customer, 1 Order. Nếu đề yêu cầu tối thiểu 5 bản ghi mỗi bảng, phải tạo đủ số lượng theo yêu cầu, không dừng ở một bộ ví dụ.
+
+9C.4. Admin quản lý Book
+
+store/admin.py:
+
+    from django.contrib import admin
+    from .models import Book
+
+    @admin.register(Book)
+    class BookAdmin(admin.ModelAdmin):
+        list_display = (
+            'Title',
+            'Author',
+            'Price',
+            'Stock'
+        )
+
+        search_fields = (
+            'Title',
+            'Author'
+        )
+
+Giải thích:
+- list_display: cột hiển thị trên trang danh sách.
+- search_fields: trường được dùng khi tìm kiếm trong Admin.
+- Tên trong tuple phải trùng tên thuộc tính Model.
+
+9C.5. Trang chủ
+
+store/views.py:
+
+    from django.shortcuts import render
+
+    def home(request):
+        return render(request, 'store/home.html')
+
+store/templates/store/base.html:
+
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <title>
+            {% block title %}Welcome to the Online Bookstore{% endblock %}
+        </title>
+    </head>
+    <body>
+        <nav>
+            <a href="{% url 'home' %}">Trang chủ</a>
+            <a href="{% url 'book_list' %}">Quản lý sách</a>
+            <a href="{% url 'order_list' %}">DS đơn hàng</a>
+            <a href="{% url 'add_customer' %}">Thêm khách hàng</a>
+        </nav>
+
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <footer>
+            © 2025 Django Bookstore App
+        </footer>
+    </body>
+    </html>
+
+Template store/templates/store/home.html:
+
+    {% extends 'store/base.html' %}
+
+    {% block title %}
+        Welcome to the Online Bookstore
+    {% endblock %}
+
+    {% block content %}
+        <h1>Welcome to the Online Bookstore</h1>
+    {% endblock %}
+
+Các URL name home, book_list, order_list, add_customer phải được khai báo tương ứng trong urls.py.
+
+9C.6. View danh sách đơn hàng
+
+store/views.py:
+
+    from .models import Order
+
+    def order_list(request):
+        orders = Order.objects.all()
+
+        return render(
+            request,
+            'store/order_list.html',
+            {'orders': orders}
+        )
+
+Template store/templates/store/order_list.html:
+
+    {% extends 'store/base.html' %}
+
+    {% block title %}
+        DANH SÁCH ĐƠN HÀNG
+    {% endblock %}
+
+    {% block content %}
+        <h1>DANH SÁCH ĐƠN HÀNG</h1>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Khách hàng</th>
+                    <th>Tên sách</th>
+                    <th>Số lượng</th>
+                    <th>Tổng tiền</th>
+                    <th>Ngày đặt</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{ order.Customer.Name }}</td>
+                        <td>{{ order.Book.Title }}</td>
+                        <td>{{ order.Quantity }}</td>
+                        <td>{{ order.Total_price }}</td>
+                        <td>{{ order.Order_date }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">Chưa có đơn hàng.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}
+
+Cách đọc:
+- order.Customer.Name: đi từ Order -> Customer -> Name.
+- order.Book.Title: đi từ Order -> Book -> Title.
+- order.Quantity: trường trực tiếp của Order.
+- order.Total_price: tổng tiền.
+- order.Order_date: ngày đặt.
+
+9C.7. URL danh sách đơn hàng
+
+store/urls.py:
+
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        path('', views.home, name='home'),
+        path('orders/', views.order_list, name='order_list'),
+    ]
+
+Project urls.py:
+
+    path('', include('store.urls'))
+
+Đường dẫn /orders/ phải khớp đúng yêu cầu đề.
+
+9C.8. CustomerForm
+
+store/forms.py:
+
+    from django import forms
+    from .models import Customer
+
+    class CustomerForm(forms.ModelForm):
+        class Meta:
+            model = Customer
+            fields = '__all__'
+
+9C.9. View edit_customer
+
+store/views.py:
+
+    from django.shortcuts import render, get_object_or_404, redirect
+    from django.contrib import messages
+    from .models import Customer
+    from .forms import CustomerForm
+
+    def edit_customer(request, id=None):
+        if id is not None:
+            customer = get_object_or_404(
+                Customer,
+                id=id
+            )
+        else:
+            customer = None
+
+        is_new = customer is None
+
+        if request.method == 'POST':
+            form = CustomerForm(
+                request.POST,
+                instance=customer
+            )
+
+            if form.is_valid():
+                saved_customer = form.save()
+
+                if is_new:
+                    messages.success(
+                        request,
+                        'Đã thêm khách hàng ' + saved_customer.Name + ' thành công'
+                    )
+                else:
+                    messages.success(
+                        request,
+                        'Đã cập nhật khách hàng ' + saved_customer.Name + ' thành công'
+                    )
+
+                return redirect('order_list')
+
+        else:
+            form = CustomerForm(instance=customer)
+
+        return render(
+            request,
+            'store/edit_customer.html',
+            {
+                'form': form,
+                'customer': customer
+            }
+        )
+
+9C.10. Template edit_customer.html
+
+    {% extends 'store/base.html' %}
+
+    {% block title %}
+        {% if customer %}
+            SỬA THÔNG TIN KHÁCH HÀNG
+        {% else %}
+            THÊM KHÁCH HÀNG
+        {% endif %}
+    {% endblock %}
+
+    {% block content %}
+        {% if customer %}
+            <h1>SỬA THÔNG TIN KHÁCH HÀNG</h1>
+        {% else %}
+            <h1>THÊM KHÁCH HÀNG</h1>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button type="submit">
+                Lưu
+            </button>
+        </form>
+    {% endblock %}
+
+9C.11. URL thêm và sửa Customer
+
+    path(
+        'edit_customer/',
+        views.edit_customer,
+        name='add_customer'
+    ),
+
+    path(
+        'edit_customer/<int:id>/',
+        views.edit_customer,
+        name='edit_customer'
+    ),
+
+Không thể viết một path duy nhất có tham số ID vừa bắt buộc vừa tùy chọn theo cách trên. Cách dễ hiểu là tạo hai path cùng trỏ đến một View.
+
+9C.12. Cấu hình messages trong base.html
+
+Thêm trước block content:
+
+    {% for message in messages %}
+        <div class="alert alert-info">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+Nếu đề dùng Bootstrap, có thể dùng alert-success cho thông báo thành công.
+
+----------------------------------------------------------------------
+9D. ĐỀ MÃ 104 – PHẦN NHÌN THẤY
+----------------------------------------------------------------------
+
+Ảnh đề 104 cung cấp một phần nội dung liên quan đến:
+- Project TGK.
+- App qlbaiviet.
+- Các Model BaiViet, ChuyenMuc, BaiVietChuyenMuc.
+- Quan hệ nhiều-nhiều qua bảng trung gian.
+- Admin quản lý ChuyenMuc.
+- Danh sách chuyên mục có thứ tự và tên chuyên mục.
+- Phần tạo Superuser nhìn thấy username qladmin và mật khẩu theo mẫu ltw@<Tên sinh viên>24.
+
+Do ảnh không hiển thị đầy đủ toàn bộ hai trang, không thể khẳng định các câu còn lại. Khi gặp dạng quản lý ChuyenMuc trong Admin:
+1. Tìm Model ChuyenMuc trong models.py.
+2. Mở admin.py.
+3. Import ChuyenMuc.
+4. Đăng ký Model.
+5. Nếu đề yêu cầu cột thì dùng list_display.
+6. Nếu yêu cầu sắp xếp thì dùng ordering.
+
+Ví dụ:
+
+    from django.contrib import admin
+    from .models import ChuyenMuc
+
+    @admin.register(ChuyenMuc)
+    class ChuyenMucAdmin(admin.ModelAdmin):
+        list_display = ('ThuTu', 'Ten')
+        ordering = ('ThuTu',)
+
+Tên trường ThuTu chỉ dùng nếu Model thật có trường ThuTu.
+
+======================================================================
+10. CÁC MẪU CODE NHỎ CẦN NHỚ
+======================================================================
+
+10.1. Import Model
+
+    from .models import Book
+
+Dấu chấm nghĩa là import từ file models.py cùng App.
+
+10.2. Lấy tất cả bản ghi
+
+    books = Book.objects.all()
+
+10.3. Lấy một bản ghi theo ID
+
+    book = Book.objects.get(id=id)
+
+Nếu không tìm thấy, get() có thể phát sinh lỗi DoesNotExist.
+
+Trong View nên dùng:
+
+    book = get_object_or_404(Book, id=id)
+
+10.4. Lọc dữ liệu
+
+    Book.objects.filter(Title__icontains='django')
+
+Một số toán tử:
+- __icontains: chứa chuỗi, không phân biệt hoa/thường.
+- __contains: chứa chuỗi, phân biệt hoa/thường tùy DB.
+- __gt: lớn hơn.
+- __lt: nhỏ hơn.
+- __gte: lớn hơn hoặc bằng.
+- __lte: nhỏ hơn hoặc bằng.
+- __startswith: bắt đầu bằng.
+- __endswith: kết thúc bằng.
+
+10.5. View hiển thị danh sách
+
+    def book_list(request):
+        books = Book.objects.all()
+        return render(
+            request,
+            'store/book_list.html',
+            {'books': books}
+        )
+
+10.6. Template lặp danh sách
+
+    {% for book in books %}
+        <p>{{ book.Title }}</p>
+    {% empty %}
+        <p>Chưa có dữ liệu.</p>
+    {% endfor %}
+
+10.7. View chi tiết
+
+    def book_detail(request, id):
+        book = get_object_or_404(Book, id=id)
+        return render(
+            request,
+            'store/book_detail.html',
+            {'book': book}
+        )
+
+10.8. URL có ID
+
+    path(
+        'books/<int:id>/',
+        views.book_detail,
+        name='book_detail'
+    )
+
+10.9. Link URL trong Template
+
+    <a href="{% url 'book_detail' book.id %}">
+        Xem chi tiết
+    </a>
+
+Tên URL và số tham số phải khớp với urls.py.
+
+10.10. Form POST
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Lưu</button>
+    </form>
+
+10.11. ModelForm
+
+    class CustomerForm(forms.ModelForm):
+        class Meta:
+            model = Customer
+            fields = '__all__'
+
+10.12. Nhận POST và lưu
+
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('order_list')
+    else:
+        form = CustomerForm()
+
+10.13. Thêm/sửa cùng một View
+
+    def edit_customer(request, id=None):
+        if id is not None:
+            instance = get_object_or_404(Customer, id=id)
+        else:
+            instance = None
+
+        if request.method == 'POST':
+            form = CustomerForm(
+                request.POST,
+                instance=instance
+            )
+
+            if form.is_valid():
+                form.save()
+                return redirect('order_list')
+        else:
+            form = CustomerForm(instance=instance)
+
+        return render(
+            request,
+            'store/edit_customer.html',
+            {'form': form, 'instance': instance}
+        )
+
+10.14. Thông báo thành công
+
+    from django.contrib import messages
+
+    messages.success(request, 'Lưu dữ liệu thành công')
+
+10.15. Chuyển trang
+
+    return redirect('order_list')
+
+10.16. Không lưu ngay mà chỉnh sửa trước
+
+    obj = form.save(commit=False)
+    obj.Book = book
+    obj.save()
+
+10.17. Ngày giờ hiện tại
+
+    from django.utils import timezone
+
+    obj.date_edited = timezone.now()
+
+10.18. Admin hiển thị cột và tìm kiếm
+
+    @admin.register(Book)
+    class BookAdmin(admin.ModelAdmin):
+        list_display = ('Title', 'Author', 'Price', 'Stock')
+        search_fields = ('Title', 'Author')
+
+10.19. Kế thừa Template
+
+Template con:
+
+    {% extends 'store/base.html' %}
+
+    {% block content %}
+        <h1>Trang của tôi</h1>
+    {% endblock %}
+
+Template gốc:
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>{% block title %}Website{% endblock %}</title>
+    </head>
+    <body>
+        {% block content %}
+        {% endblock %}
+    </body>
+    </html>
+
+======================================================================
+11. KIỂM TRA LỖI – ĐỌC TRACEBACK VÀ SỬA ĐÚNG FILE
+======================================================================
+
+11.1. TemplateDoesNotExist
+
+Nguyên nhân:
+- Sai tên Template trong render().
+- Sai vị trí thư mục.
+- Sai tên App.
+
+Nếu View gọi:
+
+    render(request, 'store/order_list.html', context)
+
+Thì cấu trúc nên là:
+
+    store/templates/store/order_list.html
+
+11.2. NoReverseMatch
+
+Nguyên nhân:
+- Template gọi URL name không tồn tại.
+- URL cần tham số nhưng quên truyền.
+- Số tham số không khớp.
+
+Ví dụ:
+    path('books/<int:id>/', views.book_detail, name='book_detail')
+
+Thì Template phải truyền ID:
+
+    {% url 'book_detail' book.id %}
+
+11.3. no such table
+
+Nguyên nhân:
+- Chưa chạy makemigrations.
+- Chưa chạy migrate.
+- Model chưa nằm trong App được đăng ký.
+
+Cách xử lý:
+    python manage.py makemigrations
+    python manage.py migrate
+
+11.4. No module named ...
+
+Nguyên nhân:
+- Sai tên App hoặc package.
+- Chạy lệnh ở sai môi trường Python.
+- App chưa được tạo.
+- Import sai đường dẫn.
+
+11.5. FieldError
+
+Nguyên nhân:
+- Tên trường trong filter(), list_display, search_fields không tồn tại.
+- Viết sai chữ hoa/thường.
+- Dùng tên thuộc tính khác tên trong models.py.
+
+Cách sửa:
+Mở models.py, đối chiếu đúng tên thuộc tính.
+
+11.6. IntegrityError
+
+Nguyên nhân có thể:
+- Bỏ trống trường bắt buộc.
+- Gán khóa ngoại không tồn tại.
+- Vi phạm ràng buộc duy nhất.
+- Xóa bản ghi đang được bảo vệ.
+
+Cách sửa:
+Đọc dòng cuối traceback và kiểm tra dữ liệu gửi vào.
+
+11.7. CSRF verification failed
+
+Kiểm tra Template có:
+
+    {% csrf_token %}
+
+Kiểm tra Form có method="post".
+Không xóa CSRF chỉ để tránh lỗi.
+
+11.8. Form không lưu
+
+Kiểm tra đúng thứ tự:
+1. HTML Form có method="post".
+2. Có csrf_token.
+3. View có if request.method == 'POST'.
+4. Form nhận request.POST.
+5. Có form.is_valid().
+6. Có form.save().
+7. Nếu dùng commit=False thì cuối cùng phải gọi obj.save().
+8. Sau khi lưu mới redirect.
+
+11.9. View lỗi do thiếu tham số
+
+Nếu URL:
+
+    path('books/<int:pk>/', views.book_detail)
+
+Thì View phải nhận:
+
+    def book_detail(request, pk):
+
+Không đặt tên pk ở URL nhưng lại nhận id trong View, trừ khi URL truyền đúng keyword id.
+
+11.10. Cách debug có thứ tự
+
+1. Đọc dòng cuối traceback.
+2. Xác định file và số dòng.
+3. Xác định lỗi thuộc URL, View, Model, Template, Form, Database hay Settings.
+4. Đối chiếu tên biến và tên trường.
+5. Sửa ít nhất có thể.
+6. Chạy lại.
+7. Nếu còn lỗi, đọc traceback mới; không đoán.
+
+======================================================================
+12. CHECKLIST HOÀN THÀNH MỘT BÀI THỰC HÀNH
+======================================================================
+
+A. Project/App
+[ ] Đúng tên Project.
+[ ] Đúng tên App.
+[ ] App đã thêm vào INSTALLED_APPS.
+[ ] Đã tạo urls.py nếu cần.
+[ ] Project urls.py đã include App urls.py.
+
+B. Model/Database
+[ ] Đã tạo đủ Model.
+[ ] Đã tạo đúng kiểu Field.
+[ ] Đã xác định đúng quan hệ 1-N hoặc N-N.
+[ ] ForeignKey nằm ở bảng phía N.
+[ ] ManyToManyField dùng through nếu có bảng trung gian tùy chỉnh.
+[ ] on_delete đúng theo yêu cầu đề.
+[ ] Đã chạy makemigrations.
+[ ] Đã chạy migrate.
+[ ] Đã kiểm tra bảng SQLite.
+[ ] Đã nhập đủ số bản ghi yêu cầu.
+
+C. Admin
+[ ] Đã tạo Superuser nếu đề yêu cầu.
+[ ] Đã đăng ký Model.
+[ ] list_display đúng các cột đề yêu cầu.
+[ ] search_fields đúng trường đề yêu cầu.
+[ ] Đã thử vào /admin/.
+
+D. View/URL/Template
+[ ] View import đúng Model.
+[ ] View truy vấn đúng dữ liệu.
+[ ] View truyền đúng context.
+[ ] render() trỏ đúng Template.
+[ ] URL name đúng.
+[ ] URL pattern có đúng tham số.
+[ ] Template nằm đúng thư mục.
+[ ] Template hiển thị đúng trường.
+[ ] Link trong Template truyền đúng ID.
+[ ] Đã mở thử từng URL.
+
+E. Form
+[ ] Đã tạo forms.py nếu cần.
+[ ] ModelForm liên kết đúng Model.
+[ ] GET hiển thị Form.
+[ ] POST nhận request.POST.
+[ ] Có csrf_token.
+[ ] Có is_valid().
+[ ] Có save().
+[ ] Nếu thêm/sửa dùng instance đúng.
+[ ] Nếu commit=False thì đã gọi save() cuối cùng.
+[ ] Có message nếu đề yêu cầu.
+[ ] Redirect đúng URL name.
+
+======================================================================
+13. CÁCH TRA TÀI LIỆU NHANH BẰNG TÌM KIẾM TỪ KHÓA
+======================================================================
+
+Nếu đang đọc file TXT này hoặc một tài liệu PDF dài, dùng Ctrl + F và tìm từ khóa:
+
+- startproject: tạo Project.
+- startapp: tạo App.
+- INSTALLED_APPS: đăng ký App.
+- models.Model: khai báo Model.
+- CharField: văn bản ngắn.
+- TextField: văn bản dài.
+- ForeignKey: quan hệ 1-N.
+- ManyToManyField: quan hệ N-N.
+- through: bảng trung gian.
+- on_delete: hành vi khi xóa.
+- makemigrations: tạo migration.
+- migrate: áp dụng migration.
+- objects.create: tạo dữ liệu.
+- objects.all: lấy tất cả.
+- objects.get: lấy một bản ghi.
+- objects.filter: lọc dữ liệu.
+- icontains: tìm kiếm chuỗi.
+- get_object_or_404: lấy dữ liệu theo ID an toàn.
+- render: trả Template.
+- path: khai báo URL.
+- include: nối URL App vào Project.
+- extends: kế thừa Template.
+- block: vùng nội dung Template con ghi đè.
+- forms.Form: Form thường.
+- ModelForm: Form gắn Model.
+- request.GET: dữ liệu GET.
+- request.POST: dữ liệu POST.
+- is_valid: kiểm tra Form.
+- cleaned_data: dữ liệu đã làm sạch.
+- save: lưu dữ liệu.
+- commit=False: chưa lưu ngay.
+- csrf_token: bảo vệ Form POST.
+- messages.success: thông báo thành công.
+- redirect: chuyển trang.
+- list_display: cột Admin.
+- search_fields: tìm kiếm Admin.
+- ordering: sắp xếp Admin.
+- timezone.now: ngày giờ hiện tại.
+
+======================================================================
+14. HƯỚNG DẪN CHO OLLAMA AI KHI DÙNG TÀI LIỆU ĐỂ HỌC VÀ LUYỆN TẬP
+======================================================================
+
+Có thể dùng phần này làm chỉ dẫn hệ thống cho một AI học tập local. Mục đích là giải thích và luyện tập trước kỳ thi, không phải hỗ trợ vi phạm quy chế thi.
+
+VAI TRÒ:
+Bạn là trợ lý dạy thực hành Django cho sinh viên mới học MIS3010. Hãy dùng file SỔ TAY ÔN TẬP DJANGO này làm nguồn tham khảo chính.
+
+NGUYÊN TẮC:
+1. Trả lời bằng tiếng Việt.
+2. Giải thích thật dễ hiểu, không giả định người học đã biết Django.
+3. Không nhảy thẳng vào code dài mà không giải thích.
+4. Khi nhận một đề luyện tập, trước tiên hãy tách đề thành các ý nhỏ.
+5. Với từng ý, chỉ rõ:
+   - Đề đang yêu cầu kết quả gì.
+   - Từ khóa nào trong đề giúp nhận ra dạng bài.
+   - Cần sửa file nào.
+   - Cần thêm code nào.
+   - Chạy lệnh nào.
+   - Kiểm tra kết quả ở URL nào.
+6. Luôn giữ nguyên tên Project, App, Model, trường dữ liệu, View, Template và URL mà đề đưa ra.
+7. Không tự ý thêm chức năng không được yêu cầu.
+8. Nếu đề không cho biết một thuộc tính hoặc quy tắc xóa, phải nói rõ là chưa được cung cấp; không tự khẳng định.
+9. Nếu cần đưa ví dụ để code chạy được, đánh dấu rõ đó là giả định/minh họa.
+10. Code phải chia theo file, mỗi file có đường dẫn rõ ràng.
+11. Sau mỗi khối code, giải thích các dòng quan trọng.
+12. Nếu có nhiều cách, ưu tiên cách đơn giản phù hợp với bài học MIS3010.
+13. Khi có lỗi, yêu cầu traceback và sửa đúng lỗi nhỏ nhất.
+14. Không bịa nội dung trang đề không được cung cấp.
+15. Nếu câu hỏi liên quan bài thi đang diễn ra mà quy chế cấm tài liệu/AI, hãy nhắc người học tuân thủ quy chế; chỉ hỗ trợ ôn tập và thực hành được phép.
+
+MẪU CẤU TRÚC TRẢ LỜI KHI GIẢI MỘT ĐỀ LUYỆN TẬP:
+
+PHẦN 1 – PHÂN TÍCH ĐỀ
+- Liệt kê từng câu.
+- Xác định Model, quan hệ, Admin, View, URL, Template, Form.
+- Ghi rõ phần nào là dữ kiện đề, phần nào chưa có.
+
+PHẦN 2 – THỨ TỰ THỰC HIỆN
+- Bước 1: tạo Project/App.
+- Bước 2: cấu hình settings.py.
+- Bước 3: viết models.py.
+- Bước 4: makemigrations và migrate.
+- Bước 5: tạo dữ liệu.
+- Bước 6: Admin.
+- Bước 7: View.
+- Bước 8: URL.
+- Bước 9: Template.
+- Bước 10: Form và kiểm tra.
+- Bước 11: chạy thử.
+
+PHẦN 3 – CODE THEO TỪNG FILE
+Mỗi file phải có:
+- Đường dẫn.
+- Code hoàn chỉnh cần thêm.
+- Giải thích từng phần.
+- Nêu phần nào cần thay theo tên đề.
+
+PHẦN 4 – CÁCH KIỂM TRA
+- Lệnh terminal.
+- URL cần mở.
+- Kết quả mong đợi.
+- Cách kiểm tra nếu chưa đúng.
+
+PHẦN 5 – LỖI CÓ THỂ GẶP
+- Nêu lỗi cụ thể.
+- Nêu nguyên nhân.
+- Chỉ file cần kiểm tra.
+- Đưa cách sửa nhỏ nhất.
+
+Khi người học chỉ hỏi “tìm phần nào trong tài liệu?”, hãy trả lời ngắn bằng mục và từ khóa Ctrl+F, không viết lại toàn bộ bài.
+
+======================================================================
+15. TỔNG KẾT – NHỮNG DẠNG PHẢI NẮM CHẮC
+======================================================================
+
+DẠNG 1: Tạo Model và bảng
+models.py -> makemigrations -> migrate.
+
+DẠNG 2: Quan hệ Một – Nhiều
+ForeignKey đặt ở bảng phía N.
+
+DẠNG 3: Quan hệ Nhiều – Nhiều
+ManyToManyField; nếu có trường bổ sung thì dùng through và Model trung gian.
+
+DẠNG 4: Nhập và truy vấn dữ liệu
+manage.py shell -> import Model -> objects.create/all/get/filter.
+
+DẠNG 5: Trang danh sách
+objects.all() -> context -> render() -> Template for loop.
+
+DẠNG 6: Trang chi tiết
+URL có ID -> View nhận ID -> get_object_or_404 -> Template.
+
+DẠNG 7: Tìm kiếm
+Form -> request.GET -> is_valid -> cleaned_data -> filter(__icontains) -> Template.
+
+DẠNG 8: Thêm/Sửa
+ModelForm -> GET hiển thị -> POST nhận dữ liệu -> is_valid -> save -> messages -> redirect.
+
+DẠNG 9: Admin
+register Model -> list_display -> search_fields -> truy cập /admin/.
+
+DẠNG 10: Template kế thừa
+base.html -> extends -> block title/content.
+
+Nếu chỉ có ít thời gian để ôn:
+1. Học chắc Model + ForeignKey + ManyToManyField.
+2. Học migration.
+3. Học View + URL + Template danh sách/chi tiết.
+4. Học ModelForm thêm/sửa.
+5. Học SearchForm GET.
+6. Học Admin list_display/search_fields.
+7. Tự làm lại một đề mẫu từ đầu mà không nhìn code.
+
+HẾT TÀI LIỆU
+"""
+
+output_path = "/mnt/data/So_tay_on_tap_Django_MIS3010_Chuong_2_4_va_de_mau.txt"
+pypandoc.convert_text(
+    content,
+    to="plain",
+    format="md",
+    outputfile=output_path,
+    extra_args=["--standalone"]
+)
+
+print(f"Đã tạo: {output_path}")
+print(f"Kích thước: {os.path.getsize(output_path):,} bytes")
+print(f"Số ký tự nội dung nguồn: {len(content):,}")

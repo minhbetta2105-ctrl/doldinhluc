@@ -1,0 +1,72 @@
+{% extends "management/base_admin.html" %}
+{% load static %}
+{% load vocab_tags %}
+{% block title %}Quản lý chủ đề từ vựng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/accounts-legacy.css' %}">{% endblock %}
+{% block breadcrumb %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><a href="{% url 'vocabulary:topic_list' %}">Vocabulary</a><i>/</i><b>Quản lý chủ đề</b></nav>{% endblock %}
+{% block management_content %}
+<div class="row between" style="align-items:flex-start;margin-bottom:6px">
+  <div><h1>Quản lý chủ đề từ vựng</h1><p class="sub">Thêm, chỉnh sửa và quản lý các chủ đề từ vựng IELTS</p></div>
+  <a class="btn" href="{% url 'vocabulary:topic_create' %}">+ Thêm chủ đề</a>
+</div>
+
+<div class="tablecard">
+  <div class="head">
+    <div class="row"><strong style="font-size:1.05rem">Danh sách chủ đề</strong><span class="chip">{{ total }} chủ đề</span></div>
+    <div class="row">
+      <form method="get" class="row" style="gap:8px"><input type="search" name="q" value="{{ q }}" placeholder="Tìm chủ đề" aria-label="Tìm chủ đề" style="width:200px;padding:7px 11px"><button class="btn small plain" type="submit">Tìm</button></form>
+      <span class="help" style="margin:0">{{ shown }} đang hiển thị · {{ hidden }} đã ẩn</span>
+    </div>
+  </div>
+  <div class="scroll">
+  {% if rows %}
+  <table>
+    <thead><tr><th>STT</th><th>Tên chủ đề</th><th>Trình độ</th><th>Số lượng từ</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>
+    {% for t in rows %}
+      <tr>
+        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+        <td><a href="{% url 'vocabulary:manage_words' topic_id=t.pk %}" style="color:var(--ink)"><strong>{{ t.name }}</strong></a>
+            <div class="help" style="margin:0">{% if t.has_history %}Đã có lịch sử luyện tập{% else %}Chưa có lịch sử luyện tập{% endif %}</div></td>
+        <td><span class="chip {{ t.level|level_class }}">{{ t.level|level_vi }}</span></td>
+        <td>{{ t.word_total }}</td>
+        <td>{% if t.status == "PUBLISHED" %}<span class="chip ok dot">Đang hiển thị</span>{% else %}<span class="chip dot">Đã ẩn</span>{% endif %}</td>
+        <td>
+          <div class="row" style="gap:10px">
+            <a class="act" href="{% url 'vocabulary:topic_edit' pk=t.pk %}">Sửa</a>
+            <form method="post" action="{% url 'vocabulary:topic_set_status' pk=t.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="{% if t.status == 'PUBLISHED' %}HIDDEN{% else %}PUBLISHED{% endif %}">
+              <button class="act mute" type="submit">{% if t.status == "PUBLISHED" %}Ẩn{% else %}Hiện{% endif %}</button>
+            </form>
+            {% if not t.has_history %}
+            <form method="post" action="{% url 'vocabulary:topic_delete' pk=t.pk %}" onsubmit="return confirm('Xóa vĩnh viễn chủ đề này?')">
+              {% csrf_token %}<button class="act" type="submit">Xóa</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p style="padding:24px;margin:0">Chưa có chủ đề nào{% if q %} khớp với "{{ q }}"{% endif %}.</p>{% endif %}
+  </div>
+  <div class="foot">
+    <span>Hiển thị {{ rows|length }} trên tổng số {{ page_obj.paginator.count }} chủ đề</span>
+    <span class="pager">
+      {% if page_obj.has_previous %}<a href="?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}">Trang trước</a>{% endif %}
+      Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      {% if page_obj.has_next %}<a href="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}">Trang sau</a>{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="infobox">
+  <span aria-hidden="true">&#128737;</span>
+  <div><strong>Chủ đề đã có lịch sử luyện tập chỉ được ẩn, không thể xóa vĩnh viễn.</strong>
+  <p>Ẩn chủ đề vẫn giữ nguyên lịch sử. Chỉ xóa chủ đề chưa có lịch sử luyện tập.</p></div>
+</div>
+{% endblock %}
+
+

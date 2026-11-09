@@ -1,0 +1,48 @@
+{% extends "accounts/layout.html" %}
+{% load accounts_tags %}
+{% block title %}Hồ sơ cá nhân - DOL IELTS{% endblock %}
+{% block account_content %}
+<div class="row between" style="align-items:flex-start;margin-bottom:18px">
+  <div>
+    <h1>{% if is_own %}Hồ sơ cá nhân{% else %}Hồ sơ của {{ target.get_full_name|default:target.username }}{% endif %}</h1>
+    <p class="sub" style="margin:0">Xem thông tin cá nhân và thông tin tài khoản{% if is_own %} của bạn{% endif %}.</p>
+  </div>
+  {% if is_own %}
+    <a class="btn" href="{% url 'accounts:profile_edit' %}">Chỉnh sửa hồ sơ</a>
+  {% else %}
+    <div class="row">
+      <a class="btn plain" href="{% url 'accounts:manage_users' %}">Quay lại danh sách</a>
+      <a class="btn" href="{% url 'accounts:user_edit' user_id=target.pk %}">Chỉnh sửa hồ sơ</a>
+    </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="row" style="gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line)">
+    <span class="avatar" style="width:40px;height:40px;border-radius:50%;background:var(--red-bg);color:var(--red);display:grid;place-items:center;font-weight:700">{{ target|initials }}</span>
+    <div>
+      <div style="font-weight:600">{{ target.get_full_name|default:target.username }}</div>
+      <div class="help" style="margin:0">{{ target.email|default:"Chưa cập nhật email" }}</div>
+      <div class="help" style="margin:0">{{ target|role_label }}</div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:22px">Thông tin cá nhân</h2>
+  <dl class="kv">
+    <div><dt>Họ và tên</dt><dd>{{ target.get_full_name|default:"Chưa cập nhật" }}</dd></div>
+    <div><dt>Email</dt><dd>{{ target.email|default:"Chưa cập nhật" }}</dd></div>
+  </dl>
+
+  <div style="background:#f3f4f6;border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-top:24px">
+    <div class="row between" style="margin-bottom:12px">
+      <strong>Thông tin tài khoản</strong>
+      <span class="help" style="margin:0">Chỉ đọc · Do hệ thống quản lý</span>
+    </div>
+    <dl class="kv" style="grid-template-columns:repeat(3,1fr)">
+      <div><dt>Mã đăng nhập</dt><dd>{{ target.username }}</dd></div>
+      <div><dt>Trạng thái tài khoản</dt><dd>{% if target.is_active %}Đang hoạt động · Không bị khóa{% else %}Đã khóa{% endif %}</dd></div>
+      <div><dt>Quyền tài khoản</dt><dd>{% if target.is_staff %}Quản trị viên{% elif target_is_student %}Học viên (HOC_VIEN){% else %}Chưa được cấp quyền Học viên{% endif %}</dd></div>
+    </dl>
+  </div>
+</div>
+{% endblock %}

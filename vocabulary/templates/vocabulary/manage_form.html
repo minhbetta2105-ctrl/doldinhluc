@@ -1,0 +1,20 @@
+{% extends "management/base_admin.html" %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/accounts-legacy.css' %}">{% endblock %}
+{% block breadcrumb %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><a href="{% url 'vocabulary:manage_topics' %}">Quản lý chủ đề</a><i>/</i><b>{{ title }}</b></nav>{% endblock %}
+{% block management_content %}
+<div style="max-width:680px;margin:0 auto">
+  <h1>{{ title }}</h1>
+  <form class="card" method="post" novalidate style="margin-top:18px">
+    {% csrf_token %}
+    {% include "accounts/_form_fields.html" %}
+    <div class="row">
+      <button class="btn" type="submit">Lưu</button>
+      <a class="btn plain" href="{% if cancel_arg %}{% url cancel_url cancel_arg %}{% else %}{% url cancel_url %}{% endif %}">Hủy</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+

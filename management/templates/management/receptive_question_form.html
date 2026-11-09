@@ -1,0 +1,5 @@
+{% extends 'management/base_admin.html' %}
+{% block title %}Câu hỏi · {{ skill_label }}{% endblock %}
+{% block teacher_heading %}{% if question %}Sửa{% else %}Thêm{% endif %} câu hỏi{% endblock %}
+{% block management_content %}<div class="teacher-data-card"><h2>{{ exercise.title }}</h2><p>Đáp án nhập dưới dạng JSON list đúng với kiểu dữ liệu của model; ví dụ: ["A"] hoặc ["true"].</p>
+<form class="teacher-form" method="post">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<p class="helptext">{{ field.help_text }}</p>{% endif %}</div>{% endfor %}<div class="teacher-form-row"><button class="teacher-action" type="submit">Lưu câu hỏi</button><a class="teacher-action secondary" href="{% if skill == 'READING' %}{% url 'management:reading_question_list' exercise.pk %}{% else %}{% url 'management:listening_question_list' exercise.pk %}{% endif %}">Hủy</a></div></form></div>{% endblock %}

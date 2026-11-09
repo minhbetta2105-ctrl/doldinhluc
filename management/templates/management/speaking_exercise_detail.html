@@ -1,0 +1,138 @@
+{% extends "management/base_admin.html" %}
+
+{% block title %}Chi tiết đề Speaking: {{ exercise.title }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-bar">
+    <a href="{% url 'management:writing_prompt_list' %}">Quản trị</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <a href="{% url 'management:speaking_exercise_list' %}">Đề Speaking</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">Chi tiết #{{ exercise.id }}</span>
+</div>
+{% endblock %}
+
+{% block management_content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+            <span class="badge" style="background-color: #EBF8FF; color: #2B6CB0; border: 1px solid #BEE3F8;">{{ exercise.get_part_display }}</span>
+            <span class="badge" style="background-color: #FEFCBF; color: #744210; border: 1px solid #FAF089;">{{ exercise.get_level_display }}</span>
+            <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-red); text-transform: uppercase;">
+                Topic: {{ exercise.topic }}
+            </span>
+        </div>
+        <h1 style="color: var(--dol-gray-900); font-size: 1.5rem;">{{ exercise.title }}</h1>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <a href="{% url 'management:speaking_support_manage' exercise.id %}" class="btn btn-secondary">
+            💡 Nội dung hỗ trợ
+        </a>
+        <a href="{% url 'management:speaking_exercise_edit' exercise.id %}" class="btn btn-primary">
+            ✏️ Chỉnh sửa đề
+        </a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+    <!-- CỘT CHÍNH: NỘI DUNG CÂU HỎI -->
+    <div>
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+            <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 12px;">
+                Nội dung câu hỏi / Cue Card
+            </h2>
+            <div style="background-color: #F8FAFC; border-left: 4px solid var(--dol-red); padding: 16px 20px; border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.95rem; color: var(--dol-charcoal); line-height: 1.7; white-space: pre-line;">
+{{ exercise.prompt_text }}
+            </div>
+        </div>
+
+        {% if support %}
+            <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm);">
+                <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 16px;">
+                    Nội dung hỗ trợ đã thiết lập (Speaking Support)
+                </h2>
+
+                {% if support.sample_audio_file %}
+                    <div style="margin-bottom: 16px; background-color: var(--dol-blue-light); padding: 12px; border-radius: 6px; border: 1px solid #BEE3F8;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-blue); display: block; margin-bottom: 4px;">🎧 Audio mẫu:</span>
+                        <audio controls src="{{ support.sample_audio_file.url }}" style="width: 100%; height: 36px;"></audio>
+                    </div>
+                {% endif %}
+
+                {% if support.idea_hint %}
+                    <div style="margin-bottom: 16px;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-gray-700); text-transform: uppercase;">Gợi ý ý tưởng:</span>
+                        <div style="background-color: #F8FAFC; padding: 12px; border-radius: 6px; margin-top: 4px; font-size: 0.875rem; white-space: pre-line;">
+{{ support.idea_hint }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if support.sample_answer %}
+                    <div style="margin-bottom: 16px;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-gray-700); text-transform: uppercase;">Bài mẫu tham khảo:</span>
+                        <div style="background-color: #F8FAFC; padding: 12px; border-radius: 6px; margin-top: 4px; font-size: 0.875rem; white-space: pre-line;">
+{{ support.sample_answer }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if support.suggested_vocabulary %}
+                    <div>
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-gray-700); text-transform: uppercase;">Từ vựng gợi ý:</span>
+                        <div style="background-color: #F8FAFC; padding: 12px; border-radius: 6px; margin-top: 4px; font-size: 0.875rem; white-space: pre-line;">
+{{ support.suggested_vocabulary }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- CỘT PHỤ: THÔNG SỐ VÀ TRẠNG THÁI -->
+    <div>
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm);">
+            <h3 style="font-size: 1rem; color: var(--dol-gray-900); margin-bottom: 16px; border-bottom: 1px solid var(--dol-gray-200); padding-bottom: 8px;">
+                Thông số hệ thống
+            </h3>
+
+            <div style="margin-bottom: 14px;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase;">Trạng thái hiển thị:</span>
+                <div style="margin-top: 4px;">
+                    {% if exercise.status == 'PUBLISHED' %}
+                        <span class="badge" style="background-color: var(--dol-green-light); color: var(--dol-green); border: 1px solid #C6F6D5;">
+                            PUBLISHED (Công bố)
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background-color: var(--dol-gray-200); color: var(--dol-gray-600); border: 1px solid var(--dol-gray-300);">
+                            HIDDEN (Đang ẩn)
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase;">Tổng số bài nộp:</span>
+                <div style="font-size: 1.25rem; font-weight: 800; color: var(--dol-gray-900); margin-top: 2px;">
+                    {{ exercise.submission_count }} bài
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase;">Ngày tạo:</span>
+                <div style="font-size: 0.85rem; color: var(--dol-gray-700); margin-top: 2px;">
+                    {{ exercise.created_at|date:"H:i - d/m/Y" }}
+                </div>
+            </div>
+
+            <div>
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase;">Cập nhật lần cuối:</span>
+                <div style="font-size: 0.85rem; color: var(--dol-gray-700); margin-top: 2px;">
+                    {{ exercise.updated_at|date:"H:i - d/m/Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

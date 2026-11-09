@@ -1,0 +1,30 @@
+{% load static accounts_tags %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#C92127">
+  <title>{% block title %}DOL IELTS Đình Lực{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'images/dol_brand_header.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/legacy-base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {% block extra_head %}{% block head %}{% endblock %}{% block extra_css %}{% endblock %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/site-final.css' %}">
+  <link rel="stylesheet" href="{% static 'css/practice-ui.css' %}">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Chuyển đến nội dung chính</a>
+  {% include 'core/_header.html' %}
+  <main class="container" id="main-content">
+    {% if messages %}<div class="site-messages" aria-live="polite">{% for message in messages %}<div class="site-message site-message-{{ message.tags|default:'info' }}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  {% include 'core/_footer.html' %}
+  <script src="{% static 'js/site.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

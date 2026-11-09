@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}IELTS Writing Practice | DOL IELTS Đình Lực{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/writing-legacy.css' %}">{% block extra_css %}{% endblock %}{% endblock %}
+{% block content %}
+<div class="breadcrumb-bar"><div class="breadcrumb-inner"><a href="{% url "writing:prompt_list" %}">Writing Hub</a>{% block breadcrumbs %}{% endblock %}</div></div>
+<div class="main-container">{% block module_content %}{% endblock %}</div>
+{% endblock %}

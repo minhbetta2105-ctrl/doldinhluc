@@ -1,0 +1,91 @@
+{% extends "speaking/base_speaking.html" %}
+
+{% block title %}Danh sách bài luyện Speaking{% endblock %}
+
+{% block breadcrumbs %}
+    <span>&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">Danh sách bài luyện</span>
+{% endblock %}
+
+{% block module_content %}
+<div style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+        <div>
+            <h1 style="color: var(--dol-gray-900); margin-bottom: 6px;">Kho đề Luyện thi IELTS Speaking</h1>
+            <p style="color: var(--dol-gray-600); font-size: 0.95rem;">
+                Chọn đề bài theo Part, Chủ đề và Trình độ mục tiêu để thực hành ghi âm và nhận đánh giá từ AI.
+            </p>
+        </div>
+        <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); padding: 8px 16px; border-radius: var(--radius-md); box-shadow: var(--shadow-xs); font-size: 0.875rem;">
+            Tổng số đề khả dụng: <strong style="color: var(--dol-red);">{{ total_count }}</strong>
+        </div>
+    </div>
+</div>
+
+{% if db_error %}
+    <div class="alert-error">{{ db_error }}</div>
+{% endif %}
+
+<!-- Bộ lọc kế thừa chung với Listening / Reading / Writing -->
+{% url 'speaking:exercise_list' as filter_url %}
+{% include 'core/_practice_filter.html' with filter_search_placeholder='Tìm đề Speaking, câu hỏi...' filter_show_topic=True filter_type_name='part' filter_type_label='Phần thi' filter_type_choices=part_choices filter_type_value=selected_part filter_show_status=True filter_show_sort=True %}
+
+<!-- Danh sách các bài Speaking -->
+{% if exercises %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+        {% for item in exercises %}
+            <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 22px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.15s, box-shadow 0.15s;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <span class="badge badge-part">{{ item.get_part_display }}</span>
+                            <span class="badge badge-level">{{ item.get_level_display }}</span>
+                        </div>
+                        {% if item.is_done %}
+                            <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-green); background-color: var(--dol-green-light); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid #C6F6D5;">
+                                ✓ ĐÃ LUYỆN
+                            </span>
+                        {% else %}
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--dol-gray-500); background-color: var(--dol-gray-100); padding: 3px 8px; border-radius: var(--radius-sm);">
+                                CHƯA LÀM
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--dol-red); margin-bottom: 4px; text-transform: uppercase;">
+                        Chủ đề: {{ item.topic }}
+                    </div>
+
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 10px; line-height: 1.4;">
+                        {{ item.title }}
+                    </h2>
+
+                    <p style="font-size: 0.875rem; color: var(--dol-gray-600); line-height: 1.5; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                        {{ item.prompt_text }}
+                    </p>
+                </div>
+
+                <div style="border-top: 1px solid var(--dol-gray-200); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.8rem; color: var(--dol-gray-500);">
+                        {% if item.support %}💡 Có bài mẫu & gợi ý{% endif %}
+                    </span>
+                    <a href="{% url 'speaking:exercise_detail' item.id %}" class="btn btn-primary" style="padding: 7px 16px; font-size: 0.825rem;">
+                        🎙️ Luyện tập ngay &rarr;
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 60px 24px; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">🎙️</div>
+        <h3 style="color: var(--dol-gray-900); margin-bottom: 8px;">Không tìm thấy bài luyện Speaking nào phù hợp</h3>
+        <p style="color: var(--dol-gray-600); font-size: 0.9rem; max-width: 480px; margin: 0 auto 20px;">
+            Hãy thử điều chỉnh lại bộ lọc tìm kiếm hoặc quay lại sau để cập nhật các đề Speaking mới nhất từ DOL Đình Lực.
+        </p>
+        <a href="{% url 'speaking:exercise_list' %}" class="btn btn-secondary">
+            Xem tất cả bài Speaking
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

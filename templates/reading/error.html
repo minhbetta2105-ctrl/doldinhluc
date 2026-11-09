@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Có lỗi xảy ra - DOL IELTS{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 60px auto; text-align: center; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 48px 32px; box-shadow: var(--shadow-sm);">
+    <div style="font-size: 56px; margin-bottom: 20px;">⚠️</div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">Đã xảy ra sự cố</h1>
+    <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 28px;">
+        {{ error_message|default:"Không thể xử lý yêu cầu của bạn vào lúc này. Vui lòng kiểm tra lại hoặc thử lại sau." }}
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+        <a href="javascript:history.back()" class="btn btn-outline">Quay lại</a>
+        <a href="{% url 'reading:exercise_list' %}" class="btn btn-primary">Danh sách bài Reading</a>
+    </div>
+</div>
+{% endblock %}

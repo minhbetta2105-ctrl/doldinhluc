@@ -1,0 +1,4 @@
+{% extends 'management/base_admin.html' %}{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/accounts-legacy.css' %}">{% block head %}{% endblock %}{% endblock %}
+{% block teacher_heading %}{% block crumb_last %}Quản lý tài khoản{% endblock %}{% endblock %}
+{% block management_content %}{% block account_admin_content %}{% endblock %}{% endblock %}

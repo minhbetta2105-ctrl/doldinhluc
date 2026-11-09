@@ -1,0 +1,38 @@
+{% extends "accounts/layout.html" %}
+{% load vocab_tags %}
+{% block title %}Vocabulary - DOL IELTS{% endblock %}
+{% block head %}
+<style>
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+  .tcard{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--ink);text-decoration:none}
+  .tcard:hover{border-color:#f0a5a8;text-decoration:none}
+  .tcard h2{margin:0 0 6px}
+  .tcard p{margin:0 0 14px;color:var(--muted);font-size:.88rem;min-height:2.6em}
+  .tcard .go{display:block;margin-top:14px;color:var(--red);font-weight:600;font-size:.9rem}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+  .filters input{flex:1;min-width:220px} .filters select{width:auto;min-width:170px}
+</style>
+{% endblock %}
+{% block crumbs %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><b>Vocabulary</b></nav>{% endblock %}
+{% block account_content %}
+<h1>Luyện tập Vocabulary</h1>
+<p class="sub">Chọn một chủ đề để xem từ vựng, học flashcard và làm bài luyện.</p>
+
+{% url 'vocabulary:topic_list' as filter_url %}
+{% include 'core/_practice_filter.html' with query=q filter_search_placeholder='Chọn hoặc nhập tên chủ đề...' level_choices=levels selected_level=level filter_show_topic=False filter_query_datalist=True filter_show_sort=False %}
+{% if topics %}
+  <div class="tgrid">
+    {% for t in topics %}
+      <a class="tcard" href="{% url 'vocabulary:topic_detail' pk=t.pk %}">
+        <h2>{{ t.name }}</h2>
+        <p>{{ t.description|truncatechars:90 }}</p>
+        <span class="chip {{ t.level|level_class }}">{{ t.get_level_display }}</span>
+        <span class="chip">{{ t.word_count }} từ vựng</span>
+        <span class="go">Học từ vựng &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card"><p style="margin:0">Hiện chưa có chủ đề từ vựng{% if q or level %} phù hợp với bộ lọc{% endif %}.</p></div>
+{% endif %}
+{% endblock %}

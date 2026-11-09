@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Luyện IELTS trực tuyến | DOL IELTS Đình Lực{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/home.css' %}">{% endblock %}
+{% block content %}
+<section class="home-hero reveal is-visible" aria-labelledby="home-title">
+ <div class="hero-copy"><p class="home-kicker"><span class="kicker-mark"></span> LUYỆN IELTS TRÊN MỘT NỀN TẢNG</p>
+ <h1 id="home-title">Luyện tập mỗi ngày.<br><span>Tiến bộ có định hướng.</span></h1>
+ <p class="hero-description">Học theo từng kỹ năng, nộp bài, xem kết quả và theo dõi tiến độ. Writing và Speaking hỗ trợ đánh giá tham khảo bằng AI.</p>
+ <div class="hero-actions">
+ {% if student %}<a class="home-button primary" href="#skills">Khám phá bài luyện <span aria-hidden="true">→</span></a><a class="home-button secondary" href="{% url 'progress:dashboard' %}">Xem tiến độ</a>
+ {% elif admin_user %}<a class="home-button primary" href="{% url 'management:dashboard' %}">Vào khu quản lý <span aria-hidden="true">→</span></a><a class="home-button secondary" href="#skills">Xem các kỹ năng</a>
+ {% elif user.is_authenticated %}<a class="home-button primary" href="{% url 'accounts:waiting' %}">Xem quyền học tập <span aria-hidden="true">→</span></a>
+ {% else %}<a class="home-button primary" href="{% url 'accounts:register' %}">Tạo tài khoản <span aria-hidden="true">→</span></a><a class="home-button secondary" href="{% url 'accounts:login' %}">Đăng nhập</a>{% endif %}
+ </div><div class="hero-highlights"><span>✓ Luyện tập theo chủ đề</span><span>✓ Lưu lịch sử làm bài</span><span>✓ Đánh giá AI tham khảo</span></div></div>
+ <div class="hero-art" aria-hidden="true"><img src="{% static 'images/ielts_learning_illustration.svg' %}" alt="" loading="eager"><div class="hero-bubble bubble-a"><span>IELTS</span><strong>Reading · Listening</strong></div><div class="hero-bubble bubble-b"><strong>AI Feedback</strong><small>Writing · Speaking</small></div></div>
+</section>
+<section class="home-section reveal" id="skills" aria-labelledby="skills-title"><div class="home-section-heading"><div><p class="home-kicker">CHỌN KỸ NĂNG</p><h2 id="skills-title">Luyện tập theo mục tiêu của bạn</h2><p>Mỗi kỹ năng có bài luyện, kết quả và lịch sử riêng, trên cùng một hệ thống.</p></div></div>
+ <div class="home-skill-grid">
+ {% for module in modules %}<article class="home-skill-card"><div class="home-skill-icon icon-{{ module.name|lower }}" aria-hidden="true">{{ module.icon }}</div><div class="skill-card-meta">IELTS PRACTICE</div><h3>{{ module.name }}</h3><p>{{ module.caption }}</p>
+ {% if student %}<a href="{{ module.path }}" class="skill-action">Bắt đầu luyện tập <span aria-hidden="true">↗</span></a>
+ {% elif user.is_authenticated and not admin_user %}<a href="{% url 'accounts:waiting' %}" class="skill-action">Xem trạng thái cấp quyền <span aria-hidden="true">↗</span></a>
+ {% elif user.is_authenticated %}<span class="skill-note">Cần quyền HOC_VIEN để luyện tập</span>
+ {% else %}<a href="{% url 'accounts:login' %}" class="skill-action">Đăng nhập để học <span aria-hidden="true">↗</span></a>{% endif %}</article>{% endfor %}
+ </div></section>
+<section class="home-feature reveal" aria-labelledby="ai-title"><div class="feature-visual"><div class="feedback-preview"><div class="preview-top"><span class="preview-icon">✦</span><span>AI STUDY ASSISTANT</span></div><div class="preview-heading">Nhận xét để cải thiện từng lần luyện</div><div class="preview-line"><i></i><span>Điểm mạnh và hướng cải thiện</span></div><div class="preview-line"><i></i><span>Kết quả lưu theo tài khoản</span></div><div class="preview-line"><i></i><span>Luyện lại và theo dõi tiến bộ</span></div><div class="preview-foot">Đánh giá tham khảo · Không phải chứng chỉ IELTS</div></div></div><div class="feature-copy"><p class="home-kicker">WRITING & SPEAKING</p><h2 id="ai-title">Không chỉ làm bài.<br>Hiểu cách cải thiện.</h2><p>Gửi bài viết hoặc bài nói để nhận kết quả phân tích tham khảo. Xem lại bài đã nộp và những gợi ý cải thiện trong từng kỹ năng.</p><div class="feature-links">{% if student %}<a href="{% url 'writing:prompt_list' %}">Luyện Writing →</a><a href="{% url 'speaking:exercise_list' %}">Luyện Speaking →</a>{% else %}<a href="{% url 'accounts:login' %}">Bắt đầu bằng đăng nhập →</a>{% endif %}</div></div></section>
+<section class="home-section reveal" aria-labelledby="steps-title"><div class="home-section-heading"><div><p class="home-kicker">QUY TRÌNH HỌC TẬP</p><h2 id="steps-title">Ba bước đơn giản để bắt đầu</h2></div></div><div class="home-steps"><div><span>01</span><h3>Chọn bài luyện</h3><p>Chọn kỹ năng, chủ đề và nội dung phù hợp.</p></div><div><span>02</span><h3>Thực hành và nộp bài</h3><p>Hoàn thành bài luyện theo đúng chức năng của từng kỹ năng.</p></div><div><span>03</span><h3>Xem kết quả</h3><p>Xem nhận xét, lịch sử và tiến độ khi đã được cấp quyền.</p></div></div></section>
+<section class="home-feedback-cta reveal"><div><p class="home-kicker">CHÚNG TÔI LẮNG NGHE</p><h2>Trải nghiệm của bạn giúp hệ thống tốt hơn</h2><p>Gửi đánh giá hoặc góp ý để nhóm cải thiện nền tảng học tập.</p></div>{% if student %}<a class="home-button primary" href="{% url 'feedback:feedback_submit' %}">Gửi góp ý →</a>{% elif user.is_authenticated %}<a class="home-button secondary" href="{% url 'accounts:waiting' %}">Xem trạng thái tài khoản →</a>{% else %}<a class="home-button secondary" href="{% url 'accounts:login' %}">Đăng nhập để góp ý →</a>{% endif %}</section>
+{% endblock %}

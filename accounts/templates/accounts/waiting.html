@@ -1,0 +1,20 @@
+{% extends "accounts/layout.html" %}
+{% load accounts_tags %}
+{% block title %}Chờ cấp quyền - DOL IELTS{% endblock %}
+{% block account_content %}
+<div class="card" style="max-width:560px;margin:40px auto;text-align:center">
+  {% if user.is_authenticated and user|is_hoc_vien %}
+    <h1>Bạn đã được cấp quyền Học viên</h1>
+    <p class="sub">Bạn có thể vào các chức năng luyện tập.</p>
+    <a class="btn" href="{% url 'vocabulary:topic_list' %}">Vào luyện từ vựng</a>
+  {% else %}
+    <h1>Tài khoản đang chờ cấp quyền</h1>
+    <p class="sub">Tài khoản của bạn chưa có quyền Học viên nên chưa vào được các chức năng luyện tập. Vui lòng chờ quản trị viên cấp quyền. Trong lúc chờ, bạn vẫn xem và cập nhật được hồ sơ cá nhân.</p>
+    {% if user.is_authenticated %}
+      <a class="btn" href="{% url 'accounts:profile' %}">Xem hồ sơ cá nhân</a>
+    {% else %}
+      <a class="btn" href="{% url 'accounts:login' %}">Đăng nhập</a>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Kết quả - {{ exercise.title }} - DOL IELTS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .result-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .score-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 32px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-sm);
+        text-align: center;
+    }
+
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border: 4px solid #3b82f6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .score-number {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1e3a8a;
+        line-height: 1;
+    }
+
+    .score-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin: 24px 0;
+    }
+
+    .stat-box {
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        text-align: center;
+    }
+
+    .stat-val {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .stat-val.correct { color: var(--success); }
+    .stat-val.wrong { color: var(--danger); }
+    .stat-val.unanswered { color: #64748b; }
+
+    .stat-title {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .question-review-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
+    .review-q-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.5;
+    }
+
+    .badge-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .badge-status.correct {
+        background: var(--success-light);
+        color: var(--success);
+        border: 1px solid #bbf7d0;
+    }
+
+    .badge-status.wrong {
+        background: var(--danger-light);
+        color: var(--danger);
+        border: 1px solid #fecaca;
+    }
+
+    .badge-status.unanswered {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .answer-compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        background: #f8fafc;
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        margin-bottom: 14px;
+    }
+
+    .compare-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .compare-value {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .explanation-box {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 12px 16px;
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        font-size: 14px;
+        color: #92400e;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">Trang chủ</a>
+        <span>/</span>
+        <a href="{% url 'reading:exercise_list' %}">Reading</a>
+        <span>/</span>
+        <span>Kết quả bài làm</span>
+    </div>
+
+    <!-- Card tổng quan kết quả (Hình 24) -->
+    <div class="score-card">
+        <div class="score-circle">
+            <span class="score-number">{{ percentage }}%</span>
+            <span class="score-label">Tỷ lệ đúng</span>
+        </div>
+
+        <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">{{ exercise.title }}</h1>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">
+            Thời gian nộp bài: <strong>{{ attempt.submitted_at|date:"H:i - d/m/Y" }}</strong> • Chủ đề: <strong>{{ exercise.topic }}</strong>
+        </p>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-val correct">{{ correct_count }}/{{ total_count }}</div>
+                <div class="stat-title">Số câu đúng</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val wrong">{{ wrong_count }}</div>
+                <div class="stat-title">Số câu sai</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val unanswered">{{ unanswered_count }}</div>
+                <div class="stat-title">Chưa trả lời</div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+            <a href="{% url 'reading:exercise_detail' exercise.id %}" class="btn btn-primary">
+                ↺ Luyện lại bài này
+            </a>
+            <a href="{% url 'reading:exercise_list' %}" class="btn btn-outline">
+                Danh sách bài Reading
+            </a>
+        </div>
+    </div>
+
+    <!-- Chi tiết từng câu hỏi (UC-REA-05 & Basic Flow 6, 7) -->
+    <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #1e293b;">Chi tiết đáp án & giải thích</h2>
+        <span style="font-size: 13px; color: var(--text-muted);">{{ answers_display|length }} câu hỏi</span>
+    </div>
+
+    {% for item in answers_display %}
+        <div class="question-review-card">
+            <div class="review-header">
+                <div class="review-q-title">
+                    <span style="font-weight: 700; color: var(--primary);">Câu {{ item.order_no }}:</span>
+                    {{ item.question_text }}
+                </div>
+                <span class="badge-status {{ item.status }}">
+                    {% if item.status == 'correct' %}
+                        ✓ Chính xác
+                    {% elif item.status == 'wrong' %}
+                        ✗ Sai
+                    {% else %}
+                        — Chưa làm
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="answer-compare">
+                <div>
+                    <div class="compare-label">Câu trả lời của bạn:</div>
+                    <div class="compare-value" style="color: {% if item.status == 'correct' %}var(--success){% elif item.status == 'wrong' %}var(--danger){% else %}#64748b{% endif %};">
+                        {{ item.user_answer }}
+                    </div>
+                </div>
+                <div>
+                    <div class="compare-label">Đáp án đúng:</div>
+                    <div class="compare-value" style="color: var(--success);">
+                        {{ item.correct_answer }}
+                    </div>
+                </div>
+            </div>
+
+            {% if item.explanation %}
+                <div class="explanation-box">
+                    <strong>💡 Giải thích:</strong> {{ item.explanation }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'management/base_admin.html' %}
+{% block title %}{% if exercise %}Sửa{% else %}Thêm{% endif %} đề {{ skill_label }} | DOL IELTS{% endblock %}
+{% block teacher_heading %}{% if exercise %}Cập nhật{% else %}Thêm{% endif %} đề {{ skill_label }}{% endblock %}
+{% block management_content %}
+<div class="teacher-data-card"><p style="margin-bottom:22px;color:#64748b">Dữ liệu quản lý dùng chung model receptive.Exercise, kỹ năng được đặt tự động theo màn hình đang chọn.</p>
+<form class="teacher-form" method="post" enctype="multipart/form-data">{% csrf_token %}
+{{ form.non_field_errors }}{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}{{ field.errors }}</div>{% endfor %}
+<div class="teacher-form-row"><button class="teacher-action" type="submit">Lưu bài luyện</button><a class="teacher-action secondary" href="{% if skill == 'READING' %}{% url 'management:reading_exercise_list' %}{% else %}{% url 'management:listening_exercise_list' %}{% endif %}">Hủy</a></div>
+</form></div>{% endblock %}

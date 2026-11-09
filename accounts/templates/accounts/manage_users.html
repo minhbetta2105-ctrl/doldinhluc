@@ -1,0 +1,184 @@
+{% extends "accounts/admin_layout.html" %}
+{% block title %}Quản lý tài khoản - DOL IELTS{% endblock %}
+{% block head %}
+<style>
+  /* ===== Thẻ thống kê ===== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+  .stat .top2{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+  .stat .tile{width:40px;height:40px;border-radius:11px;display:grid;place-items:center}
+  .tile.pink{background:#fdecec;color:var(--red)} .tile.green{background:#e8f6ee;color:var(--ok)} .tile.orange{background:#fdf1de;color:#c27400}
+  .stat .num{font-size:2.1rem;font-weight:700;line-height:1.1}
+  .stat .lbl{color:var(--muted);font-size:.86rem;margin-top:2px}
+  /* ===== Bộ lọc ===== */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:22px}
+  .filters .sbox{position:relative;flex:1;min-width:240px}
+  .filters .sbox .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8b93a1}
+  .filters .sbox input{padding-left:38px;background:#f6f7f9}
+  .filters select{width:auto;min-width:175px;background:#f6f7f9}
+  .btn.line{background:#fff;border-color:var(--line);color:#374151;font-weight:500}
+  .btn.line:hover{background:#f3f4f6}
+  /* ===== Bảng ===== */
+  .listhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .listhead select{width:auto;min-width:200px}
+  tbody tr:hover td{background:#fff8f8}
+  .actbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid #f3c0c3;background:#fff5f5;color:var(--red);border-radius:8px;padding:6px 11px;font:600 .8rem/1 inherit;font-family:inherit;cursor:pointer}
+  .actbtn:hover{background:#fde8e8}
+  .actbtn.neutral{border-color:var(--line);background:#fff;color:#374151;font-weight:500}
+  .actbtn.neutral:hover{background:#f3f4f6}
+  /* ===== Hộp xác nhận ===== */
+  dialog#confirm-dialog{max-width:520px}
+  .dhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .dhead h3{display:flex;align-items:center;gap:10px;margin:0;font-size:1.35rem}
+  .dhead h3 .ic{width:26px;height:26px;color:var(--red)}
+  .dclose{border:0;background:none;cursor:pointer;color:#6b7280;padding:4px;display:flex}
+  .notebox{background:#f3f4f6;border-radius:10px;padding:12px 14px;margin:6px 0 18px}
+  .notebox b{display:block;font-size:.85rem} .notebox span{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+  @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+{% endblock %}
+{% block account_admin_content %}
+<div class="eyebrow">ACCOUNT MANAGEMENT</div>
+<h1>Quản lý tài khoản</h1>
+<p class="sub">Xem thông tin tài khoản; chỉ quản trị hệ thống được khóa hoặc cấp quyền Học viên.</p>
+
+<div class="stats">
+  <div class="stat"><div class="top2"><span class="tile pink"><svg class="ic lg"><use href="#i-users"/></svg></span><span class="chip">Tổng số</span></div><div class="num">{{ stats.total }}</div><div class="lbl">Tổng số tài khoản</div></div>
+  <div class="stat"><div class="top2"><span class="tile green"><svg class="ic lg"><use href="#i-check-circle"/></svg></span><span class="chip ok">Hoạt động</span></div><div class="num">{{ stats.active }}</div><div class="lbl">Đang hoạt động</div></div>
+  <div class="stat"><div class="top2"><span class="tile orange"><svg class="ic lg"><use href="#i-lock"/></svg></span><span class="chip gold">Đã khóa</span></div><div class="num">{{ stats.locked }}</div><div class="lbl">Đã khóa</div></div>
+  <div class="stat"><div class="top2"><span class="tile pink"><svg class="ic lg"><use href="#i-cap"/></svg></span><span class="chip bad">Học viên</span></div><div class="num">{{ stats.students }}</div><div class="lbl">Được cấp quyền Học viên</div></div>
+</div>
+
+<form class="filters" method="get">
+  <div class="sbox"><svg class="ic"><use href="#i-search"/></svg><input type="search" name="q" value="{{ q }}" placeholder="Tìm kiếm theo tên hoặc email..." aria-label="Tìm tài khoản"></div>
+  <select name="student" aria-label="Lọc theo quyền Học viên">
+    <option value="">Tất cả quyền Học viên</option>
+    <option value="yes" {% if student == "yes" %}selected{% endif %}>Đã cấp</option>
+    <option value="no" {% if student == "no" %}selected{% endif %}>Chưa cấp</option>
+  </select>
+  <select name="status" aria-label="Lọc theo trạng thái">
+    <option value="">Tất cả trạng thái</option>
+    <option value="active" {% if status == "active" %}selected{% endif %}>Hoạt động</option>
+    <option value="locked" {% if status == "locked" %}selected{% endif %}>Đã khóa</option>
+  </select>
+  <input type="hidden" name="sort" value="{{ sort }}">
+  <a class="btn line" href="{% url 'accounts:manage_users' %}">Đặt lại <svg class="ic"><use href="#i-refresh"/></svg></a>
+  <button class="btn line" type="submit">Lọc <svg class="ic"><use href="#i-sliders"/></svg></button>
+</form>
+
+<div class="listhead">
+  <div><strong style="font-size:1.05rem">{{ result_count }} tài khoản</strong><div class="help" style="margin:0">Danh sách tài khoản có trên hệ thống</div></div>
+  <form method="get" style="margin:0">
+    <input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="student" value="{{ student }}"><input type="hidden" name="status" value="{{ status }}">
+    <select name="sort" onchange="this.form.submit()" aria-label="Sắp xếp">
+      <option value="newest" {% if sort == "newest" %}selected{% endif %}>Sắp xếp: Mới tạo nhất</option>
+      <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Sắp xếp: Cũ nhất</option>
+      <option value="name" {% if sort == "name" %}selected{% endif %}>Sắp xếp: Theo tên</option>
+    </select>
+  </form>
+</div>
+
+<div class="tablecard">
+  <div class="scroll">
+  {% if rows %}
+  <table>
+    <thead><tr><th>Mã</th><th>Họ và tên</th><th>Email</th><th>Quyền Học viên</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th></tr></thead>
+    <tbody>
+    {% for u in rows %}
+      <tr>
+        <td><strong><a href="{% url 'accounts:user_profile' user_id=u.pk %}" style="color:var(--ink)">ACC-{{ u.pk|stringformat:"03d" }}</a></strong></td>
+        <td><strong>{{ u.get_full_name|default:u.username }}</strong>{% if u.is_staff %} <span class="chip">Quản trị</span>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td>{% if u.is_student %}<span class="chip ok dot">Đã cấp</span>{% else %}<span class="chip dot">Chưa cấp</span>{% endif %}</td>
+        <td>{% if u.is_active %}<span class="chip ok dot">Hoạt động</span>{% else %}<span class="chip dot">Đã khóa</span>{% endif %}</td>
+        <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+        <td>
+          {% if u.can_manage %}
+          <div class="row" style="gap:6px">
+            {% if not u.is_me %}
+            <button type="button" class="actbtn js-confirm"
+              data-url="{% url 'accounts:toggle_active' user_id=u.pk %}"
+              data-icon="{% if u.is_active %}lock{% else %}unlock{% endif %}"
+              data-title="{% if u.is_active %}Khóa tài khoản?{% else %}Mở khóa tài khoản?{% endif %}"
+              data-name="{{ u.get_full_name|default:u.username }}" data-email="{{ u.email }}"
+              data-message="{% if u.is_active %}Tài khoản sẽ không thể đăng nhập sau khi bị khóa. Bạn có chắc chắn muốn tiếp tục?{% else %}Tài khoản sẽ có thể đăng nhập trở lại. Bạn có chắc chắn muốn tiếp tục?{% endif %}"
+              data-note1="Quyền Học viên (HOC_VIEN) giữ nguyên: {% if u.is_student %}Đã cấp{% else %}Chưa cấp{% endif %}."
+              data-note2="Chỉ thay đổi is_active; không thay đổi Group HOC_VIEN."
+              data-label="{% if u.is_active %}Khóa tài khoản{% else %}Mở khóa{% endif %}" data-action="">
+              <svg class="ic" style="width:15px;height:15px"><use href="#i-{% if u.is_active %}lock{% else %}unlock{% endif %}"/></svg>{% if u.is_active %}Khóa tài khoản{% else %}Mở khóa{% endif %}</button>
+            {% endif %}
+            <button type="button" class="actbtn neutral js-confirm"
+              data-url="{% url 'accounts:set_student' user_id=u.pk %}"
+              data-icon="user-check"
+              data-title="{% if u.is_student %}Thu hồi quyền Học viên?{% else %}Cấp quyền Học viên?{% endif %}"
+              data-name="{{ u.get_full_name|default:u.username }}" data-email="{{ u.email }}"
+              data-message="{% if u.is_student %}Tài khoản sẽ không còn vào được các chức năng luyện tập. Bạn có chắc chắn muốn tiếp tục?{% else %}Tài khoản sẽ vào được các chức năng luyện tập. Bạn có chắc chắn muốn tiếp tục?{% endif %}"
+              data-note1="Trạng thái khóa giữ nguyên: {% if u.is_active %}Đang hoạt động{% else %}Đã khóa{% endif %}."
+              data-note2="Chỉ thay đổi Group HOC_VIEN; không thay đổi is_active."
+              data-label="{% if u.is_student %}Thu hồi quyền{% else %}Cấp quyền{% endif %}"
+              data-action="{% if u.is_student %}revoke{% else %}grant{% endif %}">
+              <svg class="ic" style="width:15px;height:15px"><use href="#i-user-check"/></svg>{% if u.is_student %}Thu hồi quyền{% else %}Cấp quyền{% endif %}</button>
+          </div>
+          {% else %}<span class="help">Chỉ xem</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p style="padding:24px;margin:0">Không tìm thấy tài khoản phù hợp.</p>
+  {% endif %}
+  </div>
+  <div class="foot">
+    <span>Hiển thị {{ page_obj.start_index }}–{{ page_obj.end_index }} trên {{ result_count }} tài khoản</span>
+    <span class="pager">
+      {% if page_obj.has_previous %}<a href="?q={{ q|urlencode }}&student={{ student }}&status={{ status }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Trang trước</a>{% endif %}
+      Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      {% if page_obj.has_next %}<a href="?q={{ q|urlencode }}&student={{ student }}&status={{ status }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Trang sau</a>{% endif %}
+    </span>
+  </div>
+</div>
+
+<dialog id="confirm-dialog">
+  <form method="post" class="in" id="confirm-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <input type="hidden" name="action" id="cf-action" value="">
+    <div class="dhead">
+      <h3><svg class="ic"><use id="cf-icon" href="#i-lock"/></svg><span id="cf-title"></span></h3>
+      <button type="button" class="dclose" id="cf-x" aria-label="Đóng"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div style="font-weight:600" id="cf-name"></div>
+    <div class="help" id="cf-email" style="margin:0 0 12px"></div>
+    <p id="cf-message" style="margin:0 0 12px"></p>
+    <div class="notebox"><b id="cf-note1"></b><span id="cf-note2"></span></div>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="btn plain" id="cf-cancel">Hủy</button>
+      <button type="submit" class="btn" id="cf-ok"></button>
+    </div>
+  </form>
+</dialog>
+<script>
+(function () {
+  var dlg = document.getElementById('confirm-dialog'), form = document.getElementById('confirm-form');
+  function $(id) { return document.getElementById(id); }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.js-confirm');
+    if (!b) return;
+    form.action = b.dataset.url;
+    $('cf-action').value = b.dataset.action || '';
+    $('cf-icon').setAttribute('href', '#i-' + b.dataset.icon);
+    $('cf-title').textContent = b.dataset.title;
+    $('cf-name').textContent = b.dataset.name;
+    $('cf-email').textContent = b.dataset.email;
+    $('cf-message').textContent = b.dataset.message;
+    $('cf-note1').textContent = b.dataset.note1;
+    $('cf-note2').textContent = b.dataset.note2;
+    $('cf-ok').textContent = b.dataset.label;
+    dlg.showModal();
+  });
+  $('cf-cancel').addEventListener('click', function () { dlg.close(); });
+  $('cf-x').addEventListener('click', function () { dlg.close(); });
+})();
+</script>
+{% endblock %}

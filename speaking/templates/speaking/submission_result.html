@@ -1,0 +1,363 @@
+{% extends "speaking/base_speaking.html" %}
+{% load static %}
+
+{% block title %}Kết quả bài Speaking: {{ snapshot.title|default:"Speaking Submission" }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/speaking-result.css' %}">{% endblock %}
+
+{% block breadcrumbs %}
+    <span>&rsaquo;</span>
+    <a href="{% url 'speaking:exercise_list' %}">Danh sách bài luyện</a>
+    <span>&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">Kết quả chấm điểm</span>
+{% endblock %}
+
+{% block module_content %}
+<div style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+        <div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                <span class="badge badge-part">{{ snapshot.part }}</span>
+                <span class="badge badge-level">{{ snapshot.level }}</span>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-red); text-transform: uppercase;">
+                    Chủ đề: {{ snapshot.topic }}
+                </span>
+            </div>
+            <h1 style="color: var(--dol-gray-900); font-size: 1.5rem; line-height: 1.35;">
+                {{ snapshot.title }}
+            </h1>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{% url 'speaking:exercise_detail' submission.exercise_id %}" class="btn btn-secondary" style="font-size: 0.85rem;">
+                🔄 Luyện lại bài này
+            </a>
+            <a href="{% url 'speaking:exercise_list' %}" class="btn btn-outline" style="font-size: 0.85rem;">
+                📚 Danh sách bài
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- TRƯỜNG HỢP 1: BÀI ĐANG CHẤM (GRADING) -->
+<!-- ======================================================================= -->
+{% if is_grading %}
+    <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 40px 24px; text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+        <div style="font-size: 3rem; margin-bottom: 12px; animation: spin 2s linear infinite; display: inline-block;">⏳</div>
+        <h2 style="color: var(--dol-gray-900); font-size: 1.3rem; margin-bottom: 8px;">Bài nộp đang được AI chấm điểm</h2>
+        <p style="color: var(--dol-gray-600); font-size: 0.925rem; max-width: 540px; margin: 0 auto 20px;">
+            Hệ thống đã lưu an toàn bản ghi âm của bạn. Quá trình phân tích âm thanh, phiên âm transcript và chấm 4 tiêu chí đang được xử lý.
+        </p>
+        <div style="display: inline-block; background-color: #FEFCBF; color: #744210; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; border: 1px solid #FAF089;">
+            Trạng thái: ĐANG CHẤM &middot; Điểm số: Chưa có điểm
+        </div>
+
+        {% if submission.audio_file %}
+            <div style="margin-top: 30px; max-width: 480px; margin-left: auto; margin-right: auto; text-align: left; background-color: #F8FAFC; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--dol-gray-200);">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-gray-700); display: block; margin-bottom: 6px;">
+                    🎧 Bản ghi âm đã nộp của bạn:
+                </span>
+                <audio controls src="{{ submission.audio_file.url }}" style="width: 100%;"></audio>
+            </div>
+        {% endif %}
+    </div>
+
+<!-- ======================================================================= -->
+<!-- TRƯỜNG HỢP 2: CHẤM THẤT BẠI (FAILED) -->
+<!-- ======================================================================= -->
+{% elif is_failed %}
+    <div style="background-color: var(--dol-white); border: 1px solid #FED7D7; border-radius: var(--radius-lg); padding: 40px 24px; text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+        <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
+        <h2 style="color: var(--dol-red); font-size: 1.3rem; margin-bottom: 8px;">Quá trình chấm điểm AI gặp sự cố</h2>
+        <p style="color: var(--dol-gray-700); font-size: 0.925rem; max-width: 580px; margin: 0 auto 16px;">
+            Hệ thống không thể hoàn tất quá trình chấm điểm tự động cho bài nói này (do lỗi đường truyền AI hoặc tệp âm thanh không nhận diện được giọng nói).
+        </p>
+        <div style="display: inline-block; background-color: var(--dol-red-light); color: var(--dol-red); padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; border: 1px solid var(--dol-red-subtle); margin-bottom: 24px;">
+            Trạng thái: THẤT BẠI &middot; Điểm số: Chưa có điểm (NULL)
+        </div>
+
+        {% if submission.audio_file %}
+            <div style="max-width: 480px; margin: 0 auto 24px; text-align: left; background-color: #F8FAFC; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--dol-gray-200);">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--dol-gray-700); display: block; margin-bottom: 6px;">
+                    🎧 Bản ghi âm của bạn vẫn được lưu nguyên vẹn:
+                </span>
+                <audio controls src="{{ submission.audio_file.url }}" style="width: 100%;"></audio>
+            </div>
+        {% endif %}
+
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <a href="{% url 'speaking:exercise_detail' submission.exercise_id %}" class="btn btn-primary">
+                🎙️ Thử ghi âm lại đề này
+            </a>
+            <a href="{% url 'speaking:exercise_list' %}" class="btn btn-secondary">
+                Chọn bài khác
+            </a>
+        </div>
+    </div>
+
+<!-- ======================================================================= -->
+<!-- TRƯỜNG HỢP 3: ĐÃ CHẤM THÀNH CÔNG (GRADED) -->
+<!-- ======================================================================= -->
+{% elif is_graded %}
+
+    <!-- Reuse the Writing score overview design, but show actual Speaking metrics. -->
+    <section class="speaking-score-overview" aria-label="Kết quả ước lượng IELTS Speaking">
+      <div class="speaking-overview-title">
+        <span class="result-tag">ĐÃ CHẤM · KẾT QUẢ THAM KHẢO</span>
+        <span>IELTS Speaking Band Descriptors · 4 tiêu chí</span>
+      </div>
+      <div class="speaking-score-grid">
+        <div class="speaking-band-column">
+          <h2>ĐIỂM BÀI NÓI THAM KHẢO</h2>
+          <div class="speaking-band-ring" style="--score-percent:{% widthratio submission.overall_score 9 100 %}%;">
+            <div class="speaking-band-center">
+              <strong>{{ submission.overall_score }}</strong>
+              <small>/ 9.0</small>
+            </div>
+          </div>
+          <p>Điểm ước lượng cho bài luyện này, không phải kết quả thi IELTS chính thức.</p>
+        </div>
+        <div class="speaking-radar-column">
+          <h2>BIỂU ĐỒ 4 TIÊU CHÍ</h2>
+          {% if radar_points %}
+          <svg class="speaking-radar" viewBox="0 0 220 220" role="img" aria-label="Biểu đồ so sánh điểm Fluency, Vocabulary, Grammar và Pronunciation">
+            <polygon points="110,35 185,110 110,185 35,110" fill="none" stroke="#c9d4e5" stroke-width="1.5"/>
+            <polygon points="110,60 160,110 110,160 60,110" fill="none" stroke="#d8e1ef" stroke-dasharray="4 4"/>
+            <line x1="110" y1="35" x2="110" y2="185" stroke="#d8e1ef"/>
+            <line x1="35" y1="110" x2="185" y2="110" stroke="#d8e1ef"/>
+            <polygon points="{{ radar_points }}" fill="rgba(201,33,39,.16)" stroke="#c92127" stroke-width="2.5" stroke-linejoin="round"/>
+            <text x="110" y="20" text-anchor="middle">FC</text>
+            <text x="207" y="114" text-anchor="end">LR</text>
+            <text x="110" y="208" text-anchor="middle">GRA</text>
+            <text x="13" y="114" text-anchor="start">PR</text>
+          </svg>
+          <p>FC: trôi chảy · LR: từ vựng · GRA: ngữ pháp · PR: phát âm</p>
+          {% else %}<p>Chưa đủ dữ liệu để lập biểu đồ.</p>{% endif %}
+        </div>
+        <div class="speaking-criteria-column">
+          <h2>THANG ĐIỂM THÀNH PHẦN <small>0 – 9</small></h2>
+          <div class="speaking-criterion"><div><strong>Fluency & Coherence</strong><b>{{ submission.fluency_score|default_if_none:'–' }}</b></div><span><i style="width:{% widthratio submission.fluency_score 9 100 %}%"></i></span></div>
+          <div class="speaking-criterion"><div><strong>Lexical Resource</strong><b>{{ submission.vocabulary_score|default_if_none:'–' }}</b></div><span><i style="width:{% widthratio submission.vocabulary_score 9 100 %}%"></i></span></div>
+          <div class="speaking-criterion"><div><strong>Grammatical Range & Accuracy</strong><b>{{ submission.grammar_score|default_if_none:'–' }}</b></div><span><i style="width:{% widthratio submission.grammar_score 9 100 %}%"></i></span></div>
+          <div class="speaking-criterion"><div><strong>Pronunciation</strong><b>{{ submission.pronunciation_score|default_if_none:'–' }}</b></div><span><i style="width:{% widthratio submission.pronunciation_score 9 100 %}%"></i></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BỐ CỤC 2 CỘT CHI TIẾT KẾT QUẢ ĐÁNH GIÁ -->
+    <div class="speaking-result-details">
+
+        <!-- CỘT CHÍNH: TRANSCRIPT, NHẬN XÉT, SỬA LỖI -->
+        <div>
+            <!-- Nghe lại bài đã nộp -->
+            {% if submission.audio_file %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--dol-gray-900);">
+                            🎧 Nghe lại bài nói đã nộp của bạn
+                        </span>
+                        <span style="font-size: 0.75rem; color: var(--dol-gray-500);">
+                            Nộp lúc: {{ submission.submitted_at|date:"H:i - d/m/Y" }}
+                        </span>
+                    </div>
+                    <audio controls src="{{ submission.audio_file.url }}" style="width: 100%;"></audio>
+                </div>
+            {% endif %}
+
+            <!-- Transcript chuyển từ audio thành văn bản -->
+            {% if assessment.transcript %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        📝 Transcript (Nội dung bài nói từ audio)
+                    </h2>
+                    <div style="background-color: #F8FAFC; border: 1px solid var(--dol-gray-200); border-radius: var(--radius-md); padding: 18px 20px; font-size: 0.95rem; line-height: 1.7; color: var(--dol-charcoal); font-style: italic;">
+                        "{{ assessment.transcript }}"
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Nhận xét tổng quan của AI -->
+            {% if assessment.overall_feedback %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        💬 Nhận xét tổng quan của Giám khảo AI
+                    </h2>
+                    <p style="font-size: 0.95rem; color: var(--dol-gray-700); line-height: 1.7;">
+                        {{ assessment.overall_feedback }}
+                    </p>
+                </div>
+            {% endif %}
+
+            <!-- Điểm mạnh & Điểm cần cải thiện -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <!-- Điểm mạnh -->
+                <div style="background-color: var(--dol-green-light); border: 1px solid #C6F6D5; border-radius: var(--radius-lg); padding: 20px;">
+                    <h3 style="font-size: 1rem; color: var(--dol-green-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        ✓ Điểm mạnh ghi nhận
+                    </h3>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.875rem; color: #22543D; line-height: 1.6;">
+                        {% for s in assessment.strengths %}
+                            <li style="margin-bottom: 6px;">{{ s }}</li>
+                        {% empty %}
+                            <li>Hoàn thành phần trả lời theo yêu cầu câu hỏi.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Điểm cần cải thiện -->
+                <div style="background-color: #FFFDF5; border: 1px solid #FEEBC8; border-radius: var(--radius-lg); padding: 20px;">
+                    <h3 style="font-size: 1rem; color: #7B341E; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        ⚡ Điểm cần cải thiện
+                    </h3>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.875rem; color: #744210; line-height: 1.6;">
+                        {% for w in assessment.weaknesses %}
+                            <li style="margin-bottom: 6px;">{{ w }}</li>
+                        {% empty %}
+                            <li>Tiếp tục rèn luyện thêm tính đa dạng ngữ pháp.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sửa lỗi ngữ pháp chi tiết (Grammar corrections) -->
+            {% if assessment.grammar_corrections %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                        🔧 Chi tiết sửa lỗi ngữ pháp (Grammar Corrections)
+                    </h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="background-color: #F8FAFC; border-bottom: 2px solid var(--dol-gray-300); text-align: left;">
+                                    <th style="padding: 10px 12px; color: var(--dol-gray-700);">Câu nói của bạn</th>
+                                    <th style="padding: 10px 12px; color: var(--dol-green-dark);">Cách sửa chuẩn</th>
+                                    <th style="padding: 10px 12px; color: var(--dol-gray-700);">Giải thích</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in assessment.grammar_corrections %}
+                                    <tr style="border-bottom: 1px solid var(--dol-gray-200);">
+                                        <td style="padding: 12px; color: var(--dol-red); font-family: monospace;">{{ item.original }}</td>
+                                        <td style="padding: 12px; color: var(--dol-green); font-weight: 600; font-family: monospace;">{{ item.correction }}</td>
+                                        <td style="padding: 12px; color: var(--dol-gray-600); line-height: 1.5;">{{ item.explanation }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Gợi ý nâng cấp từ vựng (Vocabulary suggestions) -->
+            {% if assessment.vocabulary_suggestions %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                        📚 Gợi ý nâng cấp từ vựng (Lexical Resource Upgrade)
+                    </h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="background-color: #F8FAFC; border-bottom: 2px solid var(--dol-gray-300); text-align: left;">
+                                    <th style="padding: 10px 12px; color: var(--dol-gray-700);">Từ đã dùng</th>
+                                    <th style="padding: 10px 12px; color: var(--dol-blue);">Gợi ý diễn đạt tốt hơn</th>
+                                    <th style="padding: 10px 12px; color: var(--dol-gray-700);">Lý do</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in assessment.vocabulary_suggestions %}
+                                    <tr style="border-bottom: 1px solid var(--dol-gray-200);">
+                                        <td style="padding: 12px; color: var(--dol-gray-700);">{{ item.original }}</td>
+                                        <td style="padding: 12px; color: var(--dol-blue); font-weight: 600;">{{ item.suggestion }}</td>
+                                        <td style="padding: 12px; color: var(--dol-gray-600); line-height: 1.5;">{{ item.explanation }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Nhận xét phát âm chi tiết (Pronunciation feedback) -->
+            {% if assessment.pronunciation_feedback %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                        🗣️ Phân tích phát âm có căn cứ từ audio (Pronunciation Analysis)
+                    </h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="background-color: #F8FAFC; border-bottom: 2px solid var(--dol-gray-300); text-align: left;">
+                                    <th style="padding: 10px 12px; color: var(--dol-gray-700);">Từ vựng</th>
+                                    <th style="padding: 10px 12px; color: #D69E2E;">Vấn đề phát âm ghi nhận</th>
+                                    <th style="padding: 10px 12px; color: var(--dol-green-dark);">Hướng dẫn phát âm chuẩn</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in assessment.pronunciation_feedback %}
+                                    <tr style="border-bottom: 1px solid var(--dol-gray-200);">
+                                        <td style="padding: 12px; font-weight: 700; color: var(--dol-charcoal);">{{ item.word }}</td>
+                                        <td style="padding: 12px; color: #B7791F;">{{ item.issue }}</td>
+                                        <td style="padding: 12px; color: var(--dol-green-dark); line-height: 1.5;">{{ item.tip }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Lời khuyên phương pháp cải thiện -->
+            {% if assessment.improvement_suggestions %}
+                <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <h2 style="font-size: 1.15rem; color: var(--dol-gray-900); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        🎯 Hướng cải thiện cho các lần luyện tập tiếp theo
+                    </h2>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: var(--dol-gray-700); line-height: 1.8;">
+                        {% for tip in assessment.improvement_suggestions %}
+                            <li>{{ tip }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Disclaimer miễn trừ pháp lý -->
+            <div style="font-size: 0.775rem; color: var(--dol-gray-500); line-height: 1.6; padding: 12px 16px; background-color: #F8FAFC; border-radius: var(--radius-md); border: 1px solid var(--dol-gray-200);">
+                ℹ️ {{ assessment.disclaimer|default:"Kết quả đánh giá do Gemini AI thực hiện theo IELTS Speaking Band Descriptors nhằm mục đích học tập và tham khảo." }}
+            </div>
+        </div>
+
+        <!-- CỘT PHỤ: BẢN CHỤP ĐỀ THI TẠI THỜI ĐIỂM NỘP (SNAPSHOT) -->
+        <div>
+            <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); position: sticky; top: 96px;">
+                <h3 style="font-size: 0.95rem; color: var(--dol-gray-900); margin-bottom: 12px; border-bottom: 1px solid var(--dol-gray-200); padding-bottom: 8px;">
+                    📋 Bản chụp đề thi đã làm
+                </h3>
+
+                <div style="margin-bottom: 12px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase;">Tiêu đề:</span>
+                    <div style="font-size: 0.9rem; font-weight: 600; color: var(--dol-charcoal); margin-top: 2px;">
+                        {{ snapshot.title }}
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+                    <span class="badge badge-part">{{ snapshot.part }}</span>
+                    <span class="badge badge-level">{{ snapshot.level }}</span>
+                </div>
+
+                <div>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-500); text-transform: uppercase;">Nội dung câu hỏi:</span>
+                    <div style="background-color: #F8FAFC; border-left: 3px solid var(--dol-gray-400); padding: 12px; margin-top: 6px; font-size: 0.85rem; color: var(--dol-gray-700); line-height: 1.6; white-space: pre-line;">
+{{ snapshot.prompt_text }}
+                    </div>
+                </div>
+
+                <div style="margin-top: 18px; pt: 14px; border-top: 1px solid var(--dol-gray-200); font-size: 0.75rem; color: var(--dol-gray-500);">
+                    Mã bài nộp: <code style="font-size: 0.75rem;">{{ submission.submission_key }}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endif %}
+{% endblock %}

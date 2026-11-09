@@ -1,0 +1,176 @@
+{% extends "management/base_admin.html" %}
+
+{% block title %}Quản lý đề Speaking{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-bar">
+    <a href="{% url 'management:writing_prompt_list' %}">Quản trị</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">Danh sách đề Speaking</span>
+</div>
+{% endblock %}
+
+{% block management_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h1 style="color: var(--dol-gray-900); font-size: 1.5rem; margin-bottom: 4px;">
+            Quản lý đề thi IELTS Speaking
+        </h1>
+        <p style="color: var(--dol-gray-600); font-size: 0.875rem;">
+            Thêm mới, chỉnh sửa nội dung, ẩn/hiển thị và quản lý bài luyện Speaking theo Part 1, 2, 3.
+        </p>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <a href="{% url 'management:speaking_support_index' %}" class="btn btn-secondary" style="font-size: 0.875rem;">
+            💡 Quản lý nội dung hỗ trợ
+        </a>
+        <a href="{% url 'management:speaking_exercise_create' %}" class="btn btn-primary" style="font-size: 0.875rem;">
+            ➕ Thêm đề Speaking mới
+        </a>
+    </div>
+</div>
+
+<!-- Bộ lọc tìm kiếm -->
+<div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
+    <form method="get" action="{% url 'management:speaking_exercise_list' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 100px 60px; gap: 12px; align-items: flex-end;">
+        <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-600); margin-bottom: 4px; text-transform: uppercase;">Tìm kiếm</label>
+            <input type="text" name="q" value="{{ search_q }}" placeholder="Tiêu đề, chủ đề, câu hỏi..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.85rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-600); margin-bottom: 4px; text-transform: uppercase;">Phần thi (Part)</label>
+            <select name="part" style="width: 100%; padding: 8px 10px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.85rem;">
+                <option value="">-- Tất cả --</option>
+                {% for code, label in parts %}
+                    <option value="{{ code }}" {% if selected_part == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-600); margin-bottom: 4px; text-transform: uppercase;">Trình độ</label>
+            <select name="level" style="width: 100%; padding: 8px 10px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.85rem;">
+                <option value="">-- Tất cả --</option>
+                {% for code, label in levels %}
+                    <option value="{{ code }}" {% if selected_level == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dol-gray-600); margin-bottom: 4px; text-transform: uppercase;">Trạng thái</label>
+            <select name="status" style="width: 100%; padding: 8px 10px; border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); font-size: 0.85rem;">
+                <option value="">-- Tất cả --</option>
+                {% for code, label in statuses %}
+                    <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 8px;">
+            🔍 Lọc
+        </button>
+
+        {% if search_q or selected_part or selected_level or selected_status %}
+            <a href="{% url 'management:speaking_exercise_list' %}" class="btn btn-secondary" style="padding: 8px;" title="Đặt lại bộ lọc">
+                ✕
+            </a>
+        {% else %}
+            <div></div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Bảng danh sách đề Speaking -->
+<div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);">
+    {% if exercises %}
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+            <thead>
+                <tr style="background-color: var(--dol-gray-100); border-bottom: 2px solid var(--dol-gray-300); text-align: left;">
+                    <th style="padding: 12px 16px; width: 60px;">ID</th>
+                    <th style="padding: 12px 16px;">Tiêu đề đề bài</th>
+                    <th style="padding: 12px 16px; width: 100px;">Part</th>
+                    <th style="padding: 12px 16px; width: 120px;">Chủ đề</th>
+                    <th style="padding: 12px 16px; width: 120px;">Trình độ</th>
+                    <th style="padding: 12px 16px; width: 90px; text-align: center;">Bài nộp</th>
+                    <th style="padding: 12px 16px; width: 110px; text-align: center;">Trạng thái</th>
+                    <th style="padding: 12px 16px; width: 220px; text-align: right;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in exercises %}
+                    <tr style="border-bottom: 1px solid var(--dol-gray-200); {% if item.status == 'HIDDEN' %}background-color: #FAFAFA; opacity: 0.85;{% endif %}">
+                        <td style="padding: 14px 16px; font-weight: 700; color: var(--dol-gray-600);">#{{ item.id }}</td>
+                        <td style="padding: 14px 16px;">
+                            <div style="font-weight: 600; color: var(--dol-gray-900); margin-bottom: 2px;">
+                                <a href="{% url 'management:speaking_exercise_detail' item.id %}" style="color: var(--dol-charcoal); text-decoration: none;">
+                                    {{ item.title }}
+                                </a>
+                            </div>
+                            <span style="font-size: 0.775rem; color: var(--dol-gray-500); display: block; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ item.prompt_text }}
+                            </span>
+                        </td>
+                        <td style="padding: 14px 16px;">
+                            <span class="badge" style="background-color: #EBF8FF; color: #2B6CB0; border: 1px solid #BEE3F8;">
+                                {{ item.get_part_display }}
+                            </span>
+                        </td>
+                        <td style="padding: 14px 16px; color: var(--dol-gray-700); font-weight: 500;">
+                            {{ item.topic }}
+                        </td>
+                        <td style="padding: 14px 16px;">
+                            <span class="badge" style="background-color: #FEFCBF; color: #744210; border: 1px solid #FAF089;">
+                                {{ item.get_level_display }}
+                            </span>
+                        </td>
+                        <td style="padding: 14px 16px; text-align: center; font-weight: 700; color: var(--dol-gray-700);">
+                            {{ item.submission_count }}
+                        </td>
+                        <td style="padding: 14px 16px; text-align: center;">
+                            {% if item.status == 'PUBLISHED' %}
+                                <span class="badge" style="background-color: var(--dol-green-light); color: var(--dol-green); border: 1px solid #C6F6D5;">
+                                    PUBLISHED
+                                </span>
+                            {% else %}
+                                <span class="badge" style="background-color: var(--dol-gray-200); color: var(--dol-gray-600); border: 1px solid var(--dol-gray-300);">
+                                    HIDDEN
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px 16px; text-align: right;">
+                            <div style="display: inline-flex; gap: 6px;">
+                                <a href="{% url 'management:speaking_support_manage' item.id %}" class="btn btn-sm btn-secondary" title="Quản lý bài mẫu & gợi ý">
+                                    💡 Gợi ý
+                                </a>
+                                <a href="{% url 'management:speaking_exercise_edit' item.id %}" class="btn btn-sm btn-secondary" title="Sửa đề">
+                                    ✏️ Sửa
+                                </a>
+                                <form method="post" action="{% url 'management:speaking_exercise_status_toggle' item.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    {% if item.status == 'PUBLISHED' %}
+                                        <button type="submit" class="btn btn-sm btn-secondary" title="Ẩn đề">
+                                            👁️ Ẩn
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Hiển thị đề">
+                                            ✓ Hiện
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--dol-gray-600);">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🎙️</div>
+            Chưa có đề Speaking nào phù hợp. Nhấn "Thêm đề Speaking mới" để tạo đề đầu tiên.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "management/base_admin.html" %}
+{% load static %}
+{% block title %}Quản lý nội dung từ vựng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/accounts-legacy.css' %}">{% endblock %}
+{% block breadcrumb %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><a href="{% url 'vocabulary:topic_list' %}">Vocabulary</a><i>/</i><b>Quản lý nội dung</b></nav>{% endblock %}
+{% block management_content %}
+<div class="row between" style="align-items:flex-start;margin-bottom:6px">
+  <div><h1>Quản lý nội dung từ vựng</h1><p class="sub">Thêm, chỉnh sửa và quản lý từ vựng theo từng chủ đề</p></div>
+  <a class="btn" href="{% url 'vocabulary:word_create' topic_id=topic.pk %}">+ Thêm từ vựng</a>
+</div>
+
+<div class="row" style="margin-bottom:18px">
+  <label for="topic-pick" style="font-weight:500">Chọn chủ đề</label>
+  <select id="topic-pick" style="width:260px" onchange="if(this.value)location.href=this.value">
+    {% for t in topics %}<option value="{% url 'vocabulary:manage_words' topic_id=t.pk %}" {% if t.pk == topic.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+  </select>
+  <a class="btn small plain" href="{% url 'vocabulary:manage_topics' %}">Quản lý chủ đề</a>
+</div>
+
+<div class="tablecard">
+  <div class="head">
+    <div class="row"><strong style="font-size:1.05rem">Danh sách từ vựng</strong><span class="chip">{{ total }} từ vựng</span></div>
+    <span class="help" style="margin:0">{{ shown }} đang hiển thị · {{ hidden }} đã ẩn</span>
+  </div>
+  <div class="scroll">
+  {% if rows %}
+  <table>
+    <thead><tr><th>STT</th><th>Từ vựng</th><th>Phiên âm</th><th>Loại từ</th><th>Nghĩa</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>
+    {% for w in rows %}
+      <tr>
+        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+        <td><strong>{{ w.word }}</strong><div class="help" style="margin:0">{% if w.has_history %}Đã có lịch sử luyện tập{% else %}Chưa có lịch sử luyện tập{% endif %}</div></td>
+        <td>{{ w.phonetic }}</td>
+        <td>{{ w.part_of_speech }}</td>
+        <td>{{ w.meaning_vi|truncatechars:50 }}</td>
+        <td>{% if w.status == "PUBLISHED" %}<span class="chip ok dot">Đang hiển thị</span>{% else %}<span class="chip dot">Đã ẩn</span>{% endif %}</td>
+        <td>
+          <div class="row" style="gap:10px">
+            <a class="act" href="{% url 'vocabulary:word_edit' pk=w.pk %}">Sửa</a>
+            <form method="post" action="{% url 'vocabulary:word_set_status' pk=w.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="{% if w.status == 'PUBLISHED' %}HIDDEN{% else %}PUBLISHED{% endif %}">
+              <button class="act mute" type="submit">{% if w.status == "PUBLISHED" %}Ẩn{% else %}Hiện{% endif %}</button>
+            </form>
+            {% if not w.has_history %}
+            <form method="post" action="{% url 'vocabulary:word_delete' pk=w.pk %}" onsubmit="return confirm('Xóa vĩnh viễn từ vựng này?')">
+              {% csrf_token %}<button class="act" type="submit">Xóa</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p style="padding:24px;margin:0">Chủ đề này chưa có từ vựng.</p>{% endif %}
+  </div>
+  <div class="foot">
+    <span>Hiển thị {{ rows|length }} trên tổng số {{ page_obj.paginator.count }} từ vựng</span>
+    <span class="pager">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Trang trước</a>{% endif %}
+      Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Trang sau</a>{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="infobox">
+  <span aria-hidden="true">&#128737;</span>
+  <div><strong>Từ vựng đã có lịch sử luyện tập chỉ được ẩn, không thể xóa vĩnh viễn.</strong>
+  <p>Ẩn từ vựng vẫn giữ nguyên lịch sử. Chỉ xóa từ vựng chưa có lịch sử luyện tập.</p></div>
+</div>
+{% endblock %}
+
+

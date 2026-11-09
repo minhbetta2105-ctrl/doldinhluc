@@ -1,0 +1,13 @@
+{% extends 'management/base_admin.html' %}
+{% block title %}Chi tiết tiến độ học viên | DOL IELTS{% endblock %}
+{% block teacher_heading %}Tiến độ học viên{% endblock %}
+{% block management_content %}
+<div class="teacher-data-card"><a href="{% url 'management:student_progress_list' %}">← Danh sách học viên</a><h2>{{ student.get_full_name|default:student.username }}</h2><p>{{ student.email }} · Các bài được sắp xếp từ mới đến cũ; bài đang chấm hoặc lỗi không có điểm.</p></div>
+<div class="teacher-progress-grid">
+ <section class="teacher-data-card"><h3>Listening</h3>{% for a in listening_attempts %}<p>{{ a.exercise.title }} · {{ a.submitted_at|date:'d/m/Y H:i' }} · {{ a.correct_answers }}/{{ a.total_questions }} câu đúng</p>{% empty %}<p>Chưa có lượt luyện.</p>{% endfor %}</section>
+ <section class="teacher-data-card"><h3>Reading</h3>{% for a in reading_attempts %}<p>{{ a.exercise.title }} · {{ a.submitted_at|date:'d/m/Y H:i' }} · {{ a.correct_answers }}/{{ a.total_questions }} câu đúng</p>{% empty %}<p>Chưa có lượt luyện.</p>{% endfor %}</section>
+ <section class="teacher-data-card"><h3>Writing</h3>{% for a in writing_attempts %}<p>{{ a.prompt.title }} · {{ a.submitted_at|date:'d/m/Y H:i' }} · {{ a.status }} · {% if a.status == 'GRADED' %}{{ a.score }}{% else %}Chưa có điểm{% endif %}</p>{% empty %}<p>Chưa có lượt luyện.</p>{% endfor %}</section>
+ <section class="teacher-data-card"><h3>Speaking</h3>{% for a in speaking_attempts %}<p>{{ a.exercise.title }} · {{ a.submitted_at|date:'d/m/Y H:i' }} · {{ a.status }} · {% if a.status == 'GRADED' %}{{ a.overall_score }}{% else %}Chưa có điểm{% endif %}</p>{% empty %}<p>Chưa có lượt luyện.</p>{% endfor %}</section>
+ <section class="teacher-data-card"><h3>Vocabulary</h3>{% for a in vocabulary_attempts %}<p>{{ a.topic.name }} · {{ a.submitted_at|date:'d/m/Y H:i' }}</p>{% empty %}<p>Chưa có lượt luyện.</p>{% endfor %}</section>
+</div>
+{% endblock %}

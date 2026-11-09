@@ -1,0 +1,13 @@
+.env
+.venv/
+.idea/
+__pycache__/
+*.pyc
+.DS_Store
+db.sqlite3
+.env.*
+!.env.example
+# Windows development venv and local backups
+.venv312/
+db_backup.sqlite3
+db_before_*.sqlite3

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% load static accounts_tags %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/accounts-legacy.css' %}">{% block head %}{% endblock %}{% endblock %}
+{% block content %}{% include 'accounts/_icons.html' %}
+<div class="account-content-shell">{% block crumbs %}{% endblock %}{% block account_content %}{% endblock %}</div>
+{% endblock %}
+{% block extra_js %}<script>document.addEventListener('click',function(e){var eye=e.target.closest('.eye');if(eye){var inp=eye.parentElement.querySelector('input');if(inp){inp.type=inp.type==='password'?'text':'password';}}});</script>{% endblock %}

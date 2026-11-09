@@ -1,0 +1,11 @@
+/* Last-mile shared shell overrides AFTER legacy module styles */
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif!important;background:#F7F8FB}
+.site-global-header{position:sticky;top:0;z-index:200;background:#fff;border-bottom:1px solid #E4E8EF}
+.site-global-header .brand-logo img{height:52px!important;width:165px!important;max-width:100%!important;object-fit:contain!important}
+.site-global-footer{background:#fff;border-top:1px solid #E4E8EF}
+#main-content{width:100%;flex:1;min-width:0}
+#main-content>.main-container{width:100%;max-width:100%;padding:0;min-height:0}
+#main-content>.breadcrumb-bar{margin:-14px 0 24px;padding:0;background:transparent;border:0}
+#main-content .breadcrumb-inner{max-width:100%;padding:0}
+#main-content>.admin-main{max-width:100%;width:100%;padding:0;min-height:0}
+@media(max-width:720px){.site-global-header .brand-logo img{height:38px!important;width:143px!important}}

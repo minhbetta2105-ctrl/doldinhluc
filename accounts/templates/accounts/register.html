@@ -1,0 +1,16 @@
+{% extends "accounts/layout.html" %}
+{% block title %}Đăng ký tài khoản - DOL IELTS{% endblock %}
+{% block account_content %}
+<div class="auth">
+  {% include "accounts/_auth_side.html" %}
+  <form class="card" method="post" novalidate>
+    {% csrf_token %}
+    <div class="eyebrow">CREATE ACCOUNT</div>
+    <h1>Đăng ký tài khoản</h1>
+    <p class="sub" style="margin-bottom:20px">Tạo tài khoản để bắt đầu sử dụng hệ thống.</p>
+    {% include "accounts/_form_fields.html" %}
+    <button class="btn block" type="submit">Đăng ký tài khoản</button>
+    <p class="help" style="text-align:center;margin-top:16px;font-size:.9rem">Đã có tài khoản? <a href="{% url 'accounts:login' %}"><strong>Đăng nhập</strong></a></p>
+  </form>
+</div>
+{% endblock %}

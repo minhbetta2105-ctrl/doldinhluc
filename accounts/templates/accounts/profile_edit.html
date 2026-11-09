@@ -1,0 +1,20 @@
+{% extends "accounts/layout.html" %}
+{% block title %}Cập nhật thông tin cá nhân - DOL IELTS{% endblock %}
+{% block account_content %}
+<div style="max-width:640px;margin:0 auto">
+  <h1>Cập nhật thông tin cá nhân</h1>
+  <p class="sub">Mã đăng nhập, quyền Học viên và trạng thái khóa do hệ thống quản lý nên không thể sửa tại đây.</p>
+  <form class="card" method="post" novalidate>
+    {% csrf_token %}
+    {% include "accounts/_form_fields.html" %}
+    <div class="row" style="margin-top:6px">
+      <button class="btn" type="submit">Lưu thay đổi</button>
+      {% if is_own %}
+        <a class="btn plain" href="{% url 'accounts:profile' %}">Hủy</a>
+      {% else %}
+        <a class="btn plain" href="{% url 'accounts:user_profile' user_id=target.pk %}">Hủy</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

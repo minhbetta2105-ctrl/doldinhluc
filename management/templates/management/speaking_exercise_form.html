@@ -1,0 +1,203 @@
+{% extends "management/base_admin.html" %}
+
+{% block title %}
+    {% if is_create %}Thêm đề Speaking mới{% else %}Chỉnh sửa đề: {{ exercise.title }}{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-bar">
+    <a href="{% url 'management:writing_prompt_list' %}">Quản trị</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <a href="{% url 'management:speaking_exercise_list' %}">Đề Speaking</a>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <span style="color: var(--dol-gray-900); font-weight: 600;">
+        {% if is_create %}Thêm mới{% else %}Sửa #{{ exercise.id }}{% endif %}
+    </span>
+</div>
+{% endblock %}
+
+{% block management_content %}
+<div style="margin-bottom: 24px;">
+    <h1 style="color: var(--dol-gray-900); font-size: 1.5rem; margin-bottom: 4px;">
+        {% if is_create %}Thêm đề thi IELTS Speaking mới{% else %}Chỉnh sửa đề thi IELTS Speaking #{{ exercise.id }}{% endif %}
+    </h1>
+    <p style="color: var(--dol-gray-600); font-size: 0.875rem;">
+        {% if is_create %}
+            Khởi tạo đề luyện Speaking mới. Trạng thái mặc định ban đầu là HIDDEN để biên tập trước khi công bố.
+        {% else %}
+            Cập nhật thông tin đề bài Speaking. Đề đã phát sinh bài nộp của học viên sẽ bị khóa các trường nội dung cốt lõi.
+        {% endif %}
+    </p>
+</div>
+
+{% if has_submissions %}
+    <div style="background-color: #FEFCBF; border: 1px solid #FAF089; border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px; color: #744210; font-size: 0.875rem; line-height: 1.5;">
+        ⚠️ <strong>Đề bài đã có bài nộp của học viên:</strong> Nhằm bảo đảm tính toàn vẹn dữ liệu khảo thí, hệ thống khóa không cho phép sửa tiêu đề, phần thi, chủ đề và câu hỏi. Bạn chỉ có thể chuyển đổi trạng thái <strong>Ẩn/Hiện (Status)</strong>.
+    </div>
+{% endif %}
+
+{% if form.non_field_errors %}
+    <div class="alert alert-error" style="margin-bottom: 20px;">
+        {% for err in form.non_field_errors %}
+            <div>{{ err }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 1fr 420px; gap: 28px; align-items: start;">
+    <!-- CỘT FORM -->
+    <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);">
+        <form method="post" action="">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.title.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                    {{ form.title.label }} <span style="color: var(--dol-red);">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}<div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.title.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div>
+                    <label for="{{ form.part.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                        {{ form.part.label }} <span style="color: var(--dol-red);">*</span>
+                    </label>
+                    {{ form.part }}
+                    {% if form.part.errors %}<div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.part.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.level.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                        {{ form.level.label }} <span style="color: var(--dol-red);">*</span>
+                    </label>
+                    {{ form.level }}
+                    {% if form.level.errors %}<div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.level.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.topic.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                    {{ form.topic.label }} <span style="color: var(--dol-red);">*</span>
+                </label>
+                {{ form.topic }}
+                {% if form.topic.errors %}<div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.topic.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.prompt_text.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                    {{ form.prompt_text.label }} <span style="color: var(--dol-red);">*</span>
+                </label>
+                {{ form.prompt_text }}
+                {% if form.prompt_text.errors %}<div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.prompt_text.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label for="{{ form.status.id_for_label }}" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--dol-gray-700); margin-bottom: 6px;">
+                    {{ form.status.label }}
+                </label>
+                {{ form.status }}
+                {% if form.status.errors %}<div style="color: var(--dol-red); font-size: 0.8rem; margin-top: 4px;">{{ form.status.errors.0 }}</div>{% endif %}
+                <span style="font-size: 0.75rem; color: var(--dol-gray-500); display: block; margin-top: 4px;">
+                    Chọn PUBLISHED để học viên có thể nhìn thấy và làm bài ngay.
+                </span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--dol-gray-200); padding-top: 20px;">
+                <a href="{% url 'management:speaking_exercise_list' %}" class="btn btn-secondary">
+                    Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                    💾 Lưu đề bài
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- CỘT LIVE PREVIEW -->
+    <div style="background-color: var(--dol-white); border: 1px solid var(--dol-gray-300); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); position: sticky; top: 96px;">
+        <span style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; color: var(--dol-gray-500); text-transform: uppercase; display: block; margin-bottom: 12px;">
+            👁️ Xem trước giao diện học viên (Live Preview)
+        </span>
+
+        <div style="border: 1px solid var(--dol-gray-200); border-radius: var(--radius-md); padding: 18px; background-color: #F8FAFC;">
+            <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: center;">
+                <span id="preview-part" class="badge badge-part" style="font-size: 0.7rem;">Part 1</span>
+                <span id="preview-level" class="badge badge-level" style="font-size: 0.7rem;">Intermediate</span>
+            </div>
+
+            <div id="preview-topic" style="font-size: 0.75rem; font-weight: 700; color: var(--dol-red); text-transform: uppercase; margin-bottom: 4px;">
+                Topic: {{ exercise.topic|default:"Chủ đề bài thi" }}
+            </div>
+
+            <h3 id="preview-title" style="font-size: 1.05rem; color: var(--dol-gray-900); margin-bottom: 10px; line-height: 1.35;">
+                {{ exercise.title|default:"Tiêu đề bài Speaking..." }}
+            </h3>
+
+            <div id="preview-prompt" style="font-size: 0.85rem; color: var(--dol-charcoal); line-height: 1.6; white-space: pre-line; background-color: var(--dol-white); padding: 12px; border-radius: 6px; border: 1px solid var(--dol-gray-300);">
+                {{ exercise.prompt_text|default:"Nội dung câu hỏi hoặc Cue Card sẽ xuất hiện tại đây..." }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-control, .form-select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--dol-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--dol-red);
+    box-shadow: 0 0 0 3px rgba(229, 29, 36, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const titleInput = document.getElementById("id_title");
+    const partSelect = document.getElementById("id_part");
+    const levelSelect = document.getElementById("id_level");
+    const topicInput = document.getElementById("id_topic");
+    const promptInput = document.getElementById("id_prompt_text");
+
+    const pTitle = document.getElementById("preview-title");
+    const pPart = document.getElementById("preview-part");
+    const pLevel = document.getElementById("preview-level");
+    const pTopic = document.getElementById("preview-topic");
+    const pPrompt = document.getElementById("preview-prompt");
+
+    function updatePreview() {
+        if (titleInput && pTitle) pTitle.textContent = titleInput.value || "Tiêu đề bài Speaking...";
+        if (topicInput && pTopic) pTopic.textContent = "Topic: " + (topicInput.value || "Chủ đề bài thi");
+        if (promptInput && pPrompt) pPrompt.textContent = promptInput.value || "Nội dung câu hỏi hoặc Cue Card...";
+        if (partSelect && pPart) {
+            const opt = partSelect.options[partSelect.selectedIndex];
+            pPart.textContent = opt ? opt.text : "Part";
+        }
+        if (levelSelect && pLevel) {
+            const opt = levelSelect.options[levelSelect.selectedIndex];
+            pLevel.textContent = opt ? opt.text : "Level";
+        }
+    }
+
+    [titleInput, partSelect, levelSelect, topicInput, promptInput].forEach(el => {
+        if (el) {
+            el.addEventListener("input", updatePreview);
+            el.addEventListener("change", updatePreview);
+        }
+    });
+    updatePreview();
+});
+</script>
+{% endblock %}

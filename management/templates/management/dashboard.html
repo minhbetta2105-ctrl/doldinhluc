@@ -1,0 +1,8 @@
+{% extends 'management/base_admin.html' %}
+{% block title %}Tổng quan quản lý | DOL IELTS{% endblock %}
+{% block teacher_heading %}Tổng quan quản lý{% endblock %}
+{% block management_content %}
+<p class="teacher-dashboard-description">Truy cập các khu vực quản lý theo quyền được cấp. Mọi bài luyện và nội dung vẫn lưu tại các model hiện có.</p>
+<div class="teacher-dashboard-grid">{% for panel in panels %}<article class="teacher-stat"><h2>{{ panel.title }}</h2><div class="teacher-stat-number">{{ panel.count }}</div><a href="{{ panel.url }}">Xem và quản lý →</a></article>{% empty %}<div class="teacher-data-card">Tài khoản chưa có quyền quản lý một phân hệ cụ thể.</div>{% endfor %}</div>
+<div class="teacher-management-note">Trang này chỉ tổng hợp số lượng bản ghi từ cơ sở dữ liệu. Quản lý tài khoản, đề và nội dung hỗ trợ phụ thuộc Django Groups/Permissions; không tự động cấp quyền cho giáo viên.</div>
+{% endblock %}

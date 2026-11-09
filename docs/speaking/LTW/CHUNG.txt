@@ -1,0 +1,775 @@
+================================================================================
+SỔ TAY CÔNG THỨC CHUNG DJANGO (MIS3010) – DÙNG CHO MỌI MÃ ĐỀ THI
+(Tích hợp toàn bộ dạng bài trong GOIY.txt + Cấu trúc đề thi mới nhất)
+================================================================================
+
+MỤC LỤC TRA CỨU NHANH (Nhấn Ctrl + F để tìm):
+- [MUC1] : Bảng nhận diện 4 loại Bảng trong mọi đề thi & Cách đổi tên
+- [MUC2] : 5 kịch bản Đề thi mới rất dễ ra (Dự đoán sát cấu trúc đề mới)
+- [MUC3] : Bước 0 - Khởi tạo Project, App, Thư mục (Làm giống nhau 100%)
+- [MUC4] : CÂU 1 (3.0đ) - Công thức viết models.py cho 3 dạng Quan hệ (1-N, N-N thường, N-N có bảng trung gian)
+- [MUC5] : CÂU 1 (tiếp) - Cách nhập 5 dòng dữ liệu bằng liệt kê từng bước (Không dùng vòng lặp for)
+- [MUC6] : CÂU 2 (2.0đ) - Công thức viết admin.py & 4 dạng hàm tính cột bổ sung
+- [MUC7] : CÂU 3 (3.0đ) - Công thức viết forms.py cho 3 dạng Form (Thêm/Sửa, Gán khóa ngoại ẩn, Kiểm tra điều kiện clean)
+- [MUC8] : CÂU 4 (2.0đ) - Công thức viết views.py cho 4 dạng Hiển thị (Danh sách, Chi tiết ID, Tìm kiếm, Báo cáo lọc Từ ngày - Đến ngày)
+- [MUC9] : Công thức viết urls.py và 4 mẫu giao diện HTML + CSS chuẩn
+
+
+================================================================================
+[MUC1] BẢNG NHẬN DIỆN CÁC LOẠI BẢNG TRONG MỌI ĐỀ THI & CÁCH ĐỔI TÊN
+================================================================================
+
+Khi cầm tờ đề thi bất kỳ, bạn đừng慌 (hoảng). Mọi đề thi chỉ xoay quanh các bảng
+sau đây. Hãy nhìn bảng trên tờ đề và xác định tên tương ứng:
+
+1. `BangChinh` (Bảng đối tượng trung tâm - phía MỘT):
+   - Là bảng chứa thông tin chính mà hệ thống quản lý.
+   - Thường có các trường:
+     + Tên/Tiêu đề: `name` hoặc `title` hoặc `Ten` hoặc `TieuDe`
+     + Ngày tháng: `start_date` / `published_date` / `NgayTao` / `event_date`
+     + Giới hạn số lượng / Tồn kho: `max_students` / `stock` / `capacity` / `max_guests`
+     + Giá tiền (nếu có): `price` / `fee`
+
+2. `BangPhu` (Bảng danh mục hoặc nhân sự đi kèm):
+   - Ví dụ: Giảng viên (`Instructor`), Chuyên mục (`ChuyenMuc`), Kho (`Kho`),
+     Khách hàng (`Customer`), Bác sĩ (`Doctor`), Diễn giả (`Speaker`).
+
+3. `BangTrungGian` (Bảng nối Nhiều - Nhiều):
+   - Dạng A (Không có trường phụ): Chỉ là một dòng `ManyToManyField` nằm trong bảng
+     khác (như trường `instructors` nằm trong `Lesson`).
+   - Dạng B (Có trường phụ như `ThuTu`, `SoLuong`, `Role`): Đề bắt tạo thành 1 bảng
+     riêng (như `BaiVietChuyenMuc` ở đề 105, `KhoHangHoa` ở đề 109) -> Dùng `through="..."`.
+
+4. `BangGiaoDich` (Bảng phát sinh khi người dùng Đăng ký / Đặt hàng / Đánh giá):
+   - Ví dụ: Đăng ký học (`Enrollment`), Đơn hàng (`Order`), Đánh giá (`Review`),
+     Đặt phòng (`Booking`), Lịch khám (`Appointment`).
+   - Luôn có 1 khóa ngoại (`ForeignKey`) chỉ về `BangChinh`.
+
+
+================================================================================
+[MUC2] 5 KỊCH BẢN ĐỀ THI MỚI RẤT DỄ RA (ĐỂ BẠN TẬP PHẢN XẠ ĐỔI TÊN)
+================================================================================
+
+Ngoài các đề cũ trong GOIY.txt (Đề 105 Bài viết, Đề 109 Kho hàng, Đề 111 Bán sách,
+Đề 622 Khóa học), nếu đề đổi chủ đề thì sẽ rơi vào các kịch bản tương tự sau:
+
+KỊCH BẢN 1: QUẢN LÝ SỰ KIỆN / HỘI THẢO (EventManagement - app: events)
+- BangChinh     : `Event` (`name`, `event_date`, `location`, `max_participants`)
+- BangPhu       : `Speaker` (`full_name`, `email` unique, `topic` - chủ đề chuyên môn)
+- BangTrungGian : `Session` (`title`, `duration`, FK tới `Event`, M2M tới `Speaker`)
+- BangGiaoDich  : `Registration` (`attendee_name`, `attendee_email`, `registered_date`, FK tới `Event`)
+-> Câu 3: Form đăng ký tham gia sự kiện (kiểm tra sự kiện đã diễn ra chưa, đã đủ `max_participants` chưa, trùng email chưa).
+-> Câu 4: Trang `/events/report/` lọc sự kiện từ ngày - đến ngày và theo chủ đề (`topic`) của diễn giả.
+
+KỊCH BẢN 2: QUẢN LÝ KHÁM CHỮA BỆNH / PHÒNG KHÁM (ClinicManagement - app: clinic)
+- BangChinh     : `Department` hoặc `Doctor` (`full_name`, `email`, `specialty`, `max_patients_per_day`)
+- BangGiaoDich  : `Appointment` (`patient_name`, `patient_phone`, `appointment_date`, `doctor`)
+-> Câu 3: Form đặt lịch khám (kiểm tra tên bệnh nhân >= 4 ký tự, ngày khám >= hôm nay, bác sĩ chưa vượt quá số bệnh nhân tối đa, không trùng SĐT cùng ngày).
+-> Câu 4: Trang `/appointments/report/` lọc theo ngày khám và chuyên khoa (`specialty`).
+
+KỊCH BẢN 3: QUẢN LÝ ĐẶT TOUR DU LỊCH / KHÁCH SẠN (TourManagement - app: tours)
+- BangChinh     : `Tour` (`name`, `departure_date`, `destination`, `price`, `max_seats`)
+- BangPhu       : `Guide` (Hướng dẫn viên: `full_name`, `email`, `language`)
+- BangGiaoDich  : `Booking` (`customer_name`, `customer_email`, `seats`, `booking_date`, `tour`)
+-> Câu 3: Form đặt tour (kiểm tra tour chưa khởi hành, số chỗ đặt `seats` <= số chỗ còn lại, không trùng email).
+-> Câu 4: Trang `/tours/report/` lọc theo ngày khởi hành và ngôn ngữ hướng dẫn viên, tính tổng số tour và tổng số khách.
+
+KỊCH BẢN 4: QUẢN LÝ TUYỂN DỤNG VIỆC LÀM (JobPortal - app: jobs)
+- BangChinh     : `JobPosting` (`title`, `deadline`, `company`, `max_applicants`)
+- BangPhu       : `Skill` (`name`, `category`)
+- BangGiaoDich  : `Application` (`candidate_name`, `candidate_email`, `applied_date`, `job`)
+-> Câu 3: Form ứng tuyển (kiểm tra chưa quá hạn `deadline`, chưa vượt quá `max_applicants`, email chưa ứng tuyển công việc này).
+
+
+================================================================================
+[MUC3] BƯỚC 0: KHỞI TẠO PROJECT, APP VÀ CẤU HÌNH (MỌI ĐỀ LÀM GIỐNG HỆT NHAU)
+================================================================================
+
+1. Mở PyCharm -> New Project -> Kiểm tra đã chọn Python Interpreter chưa -> Create.
+2. Mở Terminal ở đáy màn hình, gõ 3 lệnh (ĐỔI `TenProject` và `ten_app` theo đề):
+
+    django-admin startproject TenProject
+    cd TenProject
+    python manage.py startapp ten_app
+
+3. Nhấp chuột phải vào thư mục `TenProject` (thư mục chứa file `manage.py`)
+   -> Chọn "Mark Directory as" -> Chọn "Sources Root".
+
+4. Mở file `TenProject/settings.py`:
+   Tìm `INSTALLED_APPS` và thêm `'ten_app',` vào cuối danh sách:
+
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'ten_app',
+    ]
+
+5. Tạo thêm file và thư mục trong `ten_app`:
+   - Chuột phải vào `ten_app` -> New -> Python File -> `forms.py`
+   - Chuột phải vào `ten_app` -> New -> Python File -> `urls.py`
+   - Chuột phải vào `ten_app` -> New -> Directory -> `templates`
+   - Chuột phải vào `templates` -> New -> Directory -> `ten_app` (gõ đúng tên app)
+
+
+================================================================================
+[MUC4] CÂU 1 (3.0 ĐIỂM): CÔNG THỨC VIẾT `models.py` CHO MỌI DẠNG ĐỀ
+================================================================================
+
+Mở file `ten_app/models.py`.
+
+4.1. CÁCH VIẾT CÁC TRƯỜNG DỮ LIỆU CƠ BẢN:
+- Chuỗi ký tự tối đa N ký tự : models.CharField(max_length=N)
+- Văn bản dài (Mô tả/Nội dung): models.TextField()
+- Số nguyên                   : models.IntegerField()
+- Số thập phân (Giá/Tiền)     : models.DecimalField(max_digits=10, decimal_places=2)
+- Ngày tháng                  : models.DateField()
+- Ngày và giờ                 : models.DateTimeField()
+- Email                       : models.EmailField()
+
+* Các chữ đi kèm trong ngoặc `(...)` khi đề yêu cầu:
+- Đề ghi "bắt buộc"           : Không cần ghi gì thêm (hoặc ghi `blank=False`).
+- Đề ghi "không bắt buộc"     : Thêm `blank=True, null=True` vào trong ngoặc.
+- Đề ghi "không trùng lặp"    : Thêm `unique=True` vào trong ngoặc.
+- Đề ghi "khóa chính tự tăng" : id = models.AutoField(primary_key=True)
+- Đề ghi "liên kết auth_user" :
+  Ở đầu file thêm: `from django.conf import settings`
+  Trường liên kết viết: `NguoiTao = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)`
+
+
+4.2. BA DẠNG QUAN HỆ TRONG `models.py` (ĐỀ NÀO CŨNG RƠI VÀO 1 TRONG 3 DẠNG NÀY):
+
+--------------------------------------------------------------------------------
+DẠNG 1: QUAN HỆ 1 - NHIỀU (Dùng `ForeignKey` - đặt ở bảng phía NHIỀU)
+(Ví dụ: 1 Khách hàng có nhiều Đơn hàng; 1 Khóa học có nhiều Học viên đăng ký)
+--------------------------------------------------------------------------------
+class BangChinh(models.Model):
+    name = models.CharField(max_length=200)
+    start_date = models.DateField()
+    max_students = models.IntegerField()
+
+    def __str__(self):
+        return self.name
+
+
+class BangGiaoDich(models.Model):
+    student_name = models.CharField(max_length=100)
+    student_email = models.EmailField()
+    enrolled_date = models.DateField()
+
+    # Khóa ngoại nối về BangChinh:
+    # - Dùng on_delete=models.CASCADE nếu đề bảo xóa bảng chính thì xóa bảng con.
+    # - Dùng on_delete=models.PROTECT nếu đề bảo không cho xóa khi còn dữ liệu liên quan (như Đề 111).
+    course = models.ForeignKey(
+        BangChinh,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+
+    def __str__(self):
+        return self.student_name
+
+
+--------------------------------------------------------------------------------
+DẠNG 2: QUAN HỆ NHIỀU - NHIỀU KHÔNG CÓ BẢNG TRUNG GIAN PHỤ (Như Đềថ្មី)
+(Đề chỉ ghi cột Kiểu dữ liệu là "Quan hệ nhiều - nhiều", KHÔNG bắt tạo bảng thứ 3)
+--------------------------------------------------------------------------------
+class BangPhu(models.Model):
+    full_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    expertise = models.CharField(max_length=150)
+
+    def __str__(self):
+        return self.full_name
+
+
+class BangChiTiet(models.Model):
+    title = models.CharField(max_length=200)
+    duration = models.IntegerField()
+    course = models.ForeignKey(BangChinh, on_delete=models.CASCADE, related_name="lessons")
+
+    # Quan hệ Nhiều - Nhiều trực tiếp (Django tự tạo bảng ngầm):
+    instructors = models.ManyToManyField(BangPhu, related_name="lessons")
+
+    def __str__(self):
+        return self.title
+
+
+--------------------------------------------------------------------------------
+DẠNG 3: QUAN HỆ NHIỀU - NHIỀU CÓ BẢNG TRUNG GIAN RIÊNG (Như Đề 105, Đề 109 trong GOIY.txt)
+(Đề cho hẳn 1 bảng thứ 3 nối 2 bảng kia, ví dụ `BaiVietChuyenMuc` hoặc `KhoHangHoa`)
+--------------------------------------------------------------------------------
+class ChuyenMuc(models.Model):
+    Ten = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.Ten
+
+
+class BaiViet(models.Model):
+    TieuDe = models.CharField(max_length=250)
+    NoiDung = models.TextField(blank=True)
+    NgayTao = models.DateField()
+
+    # Khai báo ManyToManyField có tham số through="Tên_Bảng_Trung_Gian":
+    ChuyenMuc = models.ManyToManyField(
+        ChuyenMuc,
+        through="BaiVietChuyenMuc"
+    )
+
+    def __str__(self):
+        return self.TieuDe
+
+
+class BaiVietChuyenMuc(models.Model):
+    BaiViet = models.ForeignKey(BaiViet, on_delete=models.CASCADE)
+    ChuyenMuc = models.ForeignKey(ChuyenMuc, on_delete=models.CASCADE)
+    ThuTu = models.IntegerField()  # Trường phụ nằm trong bảng trung gian
+
+
+4.3. CHẠY LỆNH TẠO BẢNG CSDL SAU KHI VIẾT XONG `models.py`:
+Mở Terminal gõ:
+    python manage.py makemigrations
+    python manage.py migrate
+
+
+================================================================================
+[MUC5] CÁCH NHẬP 5 DÒNG DỮ LIỆU MẪU TỪNG BƯỚC (KHÔNG DÙNG VÒNG LẶP FOR)
+================================================================================
+
+Khi đề yêu cầu "Nhập tối thiểu 5 dòng dữ liệu cho mỗi bảng", bạn có 2 cách:
+
+CÁCH 1: NHẬP BẰNG CHUỘT TRONG TRANG ADMIN (DỄ NHẤT CHO NGƯỜI KHÔNG BIẾT CODE)
+1. Hoàn thành bước viết `admin.py` và tạo tài khoản `createsuperuser` ở [MUC6].
+2. Chạy `python manage.py runserver` -> Mở `http://127.0.0.1:8000/admin/`.
+3. Bấm vào nút `+ Add` cạnh từng bảng:
+   - Nhập dòng thứ 1 -> Bấm "Save and add another".
+   - Nhập dòng thứ 2 -> Bấm "Save and add another".
+   - Nhập dòng thứ 3 -> Bấm "Save and add another".
+   - Nhập dòng thứ 4 -> Bấm "Save and add another".
+   - Nhập dòng thứ 5 -> Bấm "Save".
+4. Lặp lại cho đủ tất cả các bảng.
+
+CÁCH 2: NHẬP BẰNG LỆNH LIỆT KÊ TỪNG DÒNG TRONG SHELL (NẾU MUỐN COPY/PASTE NHANH)
+Mở Terminal gõ:
+    python manage.py shell
+
+Dưới đây là mẫu liệt kê từng dòng một (không dùng `for`), gặp đề nào bạn chỉ
+cần đổi tên bảng và tên trường cho khớp:
+
+from datetime import date
+from ten_app.models import *
+
+# --- TRƯỜNG HỢP A: Tạo 5 bản ghi cho Bảng đơn giản (Không có khóa ngoại) ---
+b1 = BangChinh.objects.create(name="Dữ liệu mẫu 1", start_date=date(2027, 1, 10), venue="Địa điểm 1", max_students=20)
+b2 = BangChinh.objects.create(name="Dữ liệu mẫu 2", start_date=date(2027, 2, 15), venue="Địa điểm 2", max_students=25)
+b3 = BangChinh.objects.create(name="Dữ liệu mẫu 3", start_date=date(2027, 3, 20), venue="Địa điểm 3", max_students=30)
+b4 = BangChinh.objects.create(name="Dữ liệu mẫu 4", start_date=date(2027, 4, 25), venue="Địa điểm 4", max_students=15)
+b5 = BangChinh.objects.create(name="Dữ liệu mẫu 5", start_date=date(2025, 1, 10), venue="Địa điểm 5", max_students=10)
+
+p1 = BangPhu.objects.create(full_name="Người thứ 1", email="nguoi1@gmail.com", expertise="Chuyên môn A")
+p2 = BangPhu.objects.create(full_name="Người thứ 2", email="nguoi2@gmail.com", expertise="Chuyên môn B")
+p3 = BangPhu.objects.create(full_name="Người thứ 3", email="nguoi3@gmail.com", expertise="Chuyên môn C")
+p4 = BangPhu.objects.create(full_name="Người thứ 4", email="nguoi4@gmail.com", expertise="Chuyên môn D")
+p5 = BangPhu.objects.create(full_name="Người thứ 5", email="nguoi5@gmail.com", expertise="Chuyên môn E")
+
+# --- TRƯỜNG HỢP B: Tạo 5 bản ghi cho Bảng có Khóa ngoại (1-N) ---
+# Truyền biến `b1`, `b2`... vừa tạo ở trên vào trường khóa ngoại:
+BangGiaoDich.objects.create(student_name="Khách 1", student_email="k1@gmail.com", enrolled_date=date(2026, 10, 1), course=b1)
+BangGiaoDich.objects.create(student_name="Khách 2", student_email="k2@gmail.com", enrolled_date=date(2026, 10, 2), course=b2)
+BangGiaoDich.objects.create(student_name="Khách 3", student_email="k3@gmail.com", enrolled_date=date(2026, 10, 3), course=b3)
+BangGiaoDich.objects.create(student_name="Khách 4", student_email="k4@gmail.com", enrolled_date=date(2026, 10, 4), course=b4)
+BangGiaoDich.objects.create(student_name="Khách 5", student_email="k5@gmail.com", enrolled_date=date(2026, 10, 5), course=b5)
+
+# --- TRƯỜNG HỢP C: Tạo 5 bản ghi có Quan hệ Nhiều - Nhiều trực tiếp (Dùng `.add()`) ---
+ct1 = BangChiTiet.objects.create(title="Chi tiết 1", duration=60, course=b1)
+ct1.instructors.add(p1)
+
+ct2 = BangChiTiet.objects.create(title="Chi tiết 2", duration=90, course=b2)
+ct2.instructors.add(p2)
+
+ct3 = BangChiTiet.objects.create(title="Chi tiết 3", duration=120, course=b3)
+ct3.instructors.add(p3)
+
+ct4 = BangChiTiet.objects.create(title="Chi tiết 4", duration=60, course=b4)
+ct4.instructors.add(p4)
+
+ct5 = BangChiTiet.objects.create(title="Chi tiết 5", duration=90, course=b5)
+ct5.instructors.add(p5)
+
+# --- TRƯỜNG HỢP D: Tạo 5 bản ghi nếu Quan hệ N-N có Bảng Trung Gian riêng (Như Đề 105, 109) ---
+# BaiVietChuyenMuc.objects.create(BaiViet=bv1, ChuyenMuc=cm1, ThuTu=1)
+# BaiVietChuyenMuc.objects.create(BaiViet=bv2, ChuyenMuc=cm2, ThuTu=2)
+# BaiVietChuyenMuc.objects.create(BaiViet=bv3, ChuyenMuc=cm3, ThuTu=3)
+# BaiVietChuyenMuc.objects.create(BaiViet=bv4, ChuyenMuc=cm4, ThuTu=4)
+# BaiVietChuyenMuc.objects.create(BaiViet=bv5, ChuyenMuc=cm5, ThuTu=5)
+
+exit()
+
+
+================================================================================
+[MUC6] CÂU 2 (2.0 ĐIỂM): CÔNG THỨC VIẾT `admin.py` & 4 DẠNG CỘT TỰ TÍNH
+================================================================================
+
+Bước 1: Tạo tài khoản quản trị trong Terminal:
+    python manage.py createsuperuser
+    (Chú ý đọc đề xem đề yêu cầu đặt Username là `admin`, `stockadmin` hay `qladmin`).
+
+Bước 2: Mở file `ten_app/admin.py` và áp dụng mẫu dưới đây:
+
+from django.contrib import admin
+from django.db.models import Sum
+from .models import *  # Dấu * giúp lấy toàn bộ các bảng đã viết bên models.py
+
+
+@admin.register(BangChinh)   # Đổi `BangChinh` thành tên bảng đề yêu cầu tùy chỉnh Admin
+class BangChinhAdmin(admin.ModelAdmin):
+    # 1. Các cột hiển thị ra bảng quản trị:
+    list_display = (
+        "ten_truong_1",
+        "ten_truong_2",
+        "ten_truong_3",
+        "cot_bo_sung",   # Tên hàm tự tính viết ở dưới
+    )
+
+    # 2. Ô tìm kiếm (Đề bảo tìm kiếm theo trường nào thì ghi vào):
+    search_fields = ("ten_truong_1",)
+
+    # 3. Bộ lọc bên phải (Đề bảo lọc theo trường nào thì ghi vào):
+    list_filter = ("ten_truong_2",)
+
+    # 4. Sắp xếp:
+    # - Tăng dần : ordering = ("ten_truong_2",)
+    # - Giảm dần : ordering = ("-ten_truong_2",)   (Có dấu trừ đằng trước)
+    ordering = ("-ten_truong_2",)
+
+    # 5. CHỌN 1 TRONG 4 DẠNG HÀM TÍNH CỘT BỔ SUNG DƯỚI ĐÂY TÙY THEO ĐỀ YÊU CẦU:
+
+    # [Dạng 1 - Hay ra nhất]: Đếm số bản ghi bảng con (Số học viên đăng ký, Số đơn hàng, Số buổi học)
+    def cot_bo_sung(self, obj):
+        return obj.enrollments.count()  # Đổi `enrollments` thành related_name ở khóa ngoại
+
+    # [Dạng 2]: Tính số lượng còn lại (Sĩ số tối đa trừ đi Số người đã đăng ký)
+    # def cot_bo_sung(self, obj):
+    #     return obj.max_students - obj.enrollments.count()
+
+    # [Dạng 3]: Tính tổng tiền / tổng số lượng từ bảng con (VD: Tổng số ghế đã đặt, Tổng doanh thu)
+    # def cot_bo_sung(self, obj):
+    #     tong = obj.orders.aggregate(Sum("total_price"))["total_price__sum"]
+    #     return tong or 0
+
+    # [Dạng 4 - Đề 109]: Hiển thị ghép `<id> - <Tên>`
+    # def cot_bo_sung(self, obj):
+    #     return f"{obj.id} - {obj.name}"
+
+    cot_bo_sung.short_description = "Tên cột tiếng Việt đề yêu cầu"
+
+
+# Đăng ký tất cả các bảng còn lại (Đề yêu cầu đăng ký tất cả model):
+admin.site.register(BangPhu)
+admin.site.register(BangChiTiet)
+admin.site.register(BangGiaoDich)
+
+
+================================================================================
+[MUC7] CÂU 3 (3.0 ĐIỂM): CÔNG THỨC VIẾT `forms.py` CHO 3 DẠNG ĐỀ THI
+================================================================================
+
+Khi đọc Câu 3 trên tờ đề, nó sẽ rơi vào **1 trong 3 dạng** sau đây. Đề thuộc dạng
+nào thì bạn chép đúng dạng đó vào `ten_app/forms.py`:
+
+--------------------------------------------------------------------------------
+DẠNG FORM 1 (ĐỀ MỚI NHẤT): FORM ĐĂNG KÝ / GIAO DỊCH CÓ KIỂM TRA NHIỀU ĐIỀU KIỆN
+(Ví dụ: Tạo Form đăng ký học, đặt vé, đặt phòng, ứng tuyển... có kiểm tra lỗi `clean`)
+--------------------------------------------------------------------------------
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from .models import *
+
+
+class TenFormTheoDe(forms.ModelForm):
+    # Nếu đề yêu cầu thêm 1 ô tích chọn xác nhận thông tin (như confirm_information):
+    confirm_information = forms.BooleanField(
+        required=True,
+        label="Xác nhận thông tin",
+        error_messages={"required": "Bạn phải xác nhận thông tin."}
+    )
+
+    class Meta:
+        model = BangGiaoDich   # Đổi thành tên bảng lưu dữ liệu của Form
+        fields = [
+            "truong_ten",
+            "truong_email",
+            "truong_khoa_ngoai",
+        ]
+
+    # Hàm kiểm tra dữ liệu (Đề yêu cầu kiểm tra ý nào thì giữ lại khối `if` đó):
+    def clean(self):
+        cleaned_data = super().clean()
+
+        ten = cleaned_data.get("truong_ten", "")
+        email = cleaned_data.get("truong_email", "")
+        so_luong = cleaned_data.get("so_luong")
+        cha = cleaned_data.get("truong_khoa_ngoai")  # Đối tượng bảng chính được chọn
+
+        # Ý 1: Kiểm tra độ dài tên tối thiểu N ký tự (VD: ít nhất 4 ký tự)
+        if ten and len(ten.strip()) < 4:
+            raise ValidationError("Họ tên phải có ít nhất 4 ký tự.")
+
+        # Ý 2: Kiểm tra số lượng nhập vào phải lớn hơn 0 (hoặc trong khoảng 0 đến 5)
+        if so_luong is not None and so_luong <= 0:
+            raise ValidationError("Số lượng phải lớn hơn 0.")
+
+        if cha:
+            today = timezone.now().date()
+
+            # Ý 3: Không cho đăng ký nếu đã khai giảng / đã diễn ra / quá hạn
+            if cha.start_date <= today:
+                raise ValidationError("Đã khai giảng hoặc quá hạn, không thể đăng ký.")
+
+            # Ý 4: Không cho đăng ký khi số lượng đã đạt tối đa (max_students / capacity)
+            if cha.enrollments.count() >= cha.max_students:
+                raise ValidationError("Đã đạt số lượng tối đa, không thể đăng ký thêm.")
+
+            # Ý 5: Không cho đặt số lượng vượt quá tồn kho (stock)
+            # if so_luong and so_luong > cha.stock:
+            #     raise ValidationError("Số lượng đặt vượt quá số lượng tồn kho.")
+
+            # Ý 6: Không cho phép cùng một email (hoặc SĐT) đăng ký trùng vào cùng 1 mục
+            if email:
+                bi_trung = BangGiaoDich.objects.filter(
+                    truong_khoa_ngoai=cha,
+                    truong_email__iexact=email
+                ).exists()
+                if bi_trung:
+                    raise ValidationError("Email này đã đăng ký mục này rồi.")
+
+        return cleaned_data
+
+
+--------------------------------------------------------------------------------
+DẠNG FORM 2 (ĐỀ 105, 111, BÀI 2 CHƯƠNG 4): FORM VỪA THÊM MỚI VỪA CHỈNH SỬA THEO ID
+(Đề ghi: "Nếu không có ID thì thêm mới, nếu có ID thì chỉnh sửa thông tin")
+--------------------------------------------------------------------------------
+from django import forms
+from .models import Customer   # Đổi thành tên bảng đề yêu cầu (Customer, BaiViet, Publisher)
+
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = "__all__"     # Lấy tất cả các trường trong bảng
+
+
+--------------------------------------------------------------------------------
+DẠNG FORM 3 (BÀI 1 CHƯƠNG 4): FORM TÌM KIẾM ĐƠN GIẢN (`forms.Form`)
+(Đề bắt tạo `SearchForm` kế thừa từ `forms.Form` thay vì `ModelForm`)
+--------------------------------------------------------------------------------
+from django import forms
+
+class SearchForm(forms.Form):
+    search = forms.CharField(required=False, min_length=3, label="Từ khóa")
+    search_in = forms.ChoiceField(
+        choices=[
+            ("title", "Tiêu đề"),
+            ("contributor", "Tác giả / Người đóng góp"),
+        ],
+        required=True,
+        label="Tìm theo"
+    )
+
+
+================================================================================
+[MUC8] CÂU 3 & CÂU 4: CÔNG THỨC VIẾT `views.py` CHO 4 DẠNG CHỨC NĂNG
+================================================================================
+
+Mở file `ten_app/views.py`. Dưới đây là 4 hàm View mẫu tương ứng với mọi yêu cầu
+có thể xuất hiện trong đề thi:
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.utils import timezone
+from .models import *
+from .forms import *
+
+
+# ------------------------------------------------------------------------------
+# MẪU VIEW 1 (Dùng cho Câu 3 Đề mới): Form Đăng ký + Tự động gán ngày hôm nay
+# ------------------------------------------------------------------------------
+def dang_ky_view(request):
+    if request.method == "POST":
+        form = TenFormTheoDe(request.POST)
+        if form.is_valid():
+            # Dùng commit=False để tự gán ngày đăng ký (enrolled_date) là hôm nay:
+            ban_ghi = form.save(commit=False)
+            ban_ghi.enrolled_date = timezone.now().date()
+            ban_ghi.save()
+
+            messages.success(request, "Đăng ký thành công!")
+            return redirect("ten_url_dang_ky")
+    else:
+        form = TenFormTheoDe()
+
+    return render(request, "ten_app/enroll.html", {"form": form})
+
+
+# ------------------------------------------------------------------------------
+# MẪU VIEW 2 (Dùng cho Đề 105, 111, Chương 4): 1 View vừa Thêm mới vừa Sửa theo ID
+# ------------------------------------------------------------------------------
+def them_hoac_sua_view(request, id=None):
+    # Nếu trên URL có truyền id -> Lấy bản ghi cũ ra để sửa; nếu không có -> None (Thêm mới)
+    if id is not None:
+        instance = get_object_or_404(Customer, id=id)
+    else:
+        instance = None
+
+    if request.method == "POST":
+        form = CustomerForm(request.POST, instance=instance)
+        if form.is_valid():
+            da_luu = form.save()
+            messages.success(request, "Đã lưu thông tin thành công!")
+            return redirect("ten_url_danh_sach")
+    else:
+        form = CustomerForm(instance=instance)
+
+    return render(request, "ten_app/enroll.html", {
+        "form": form,
+        "instance": instance,
+    })
+
+
+# ------------------------------------------------------------------------------
+# MẪU VIEW 3 (Dùng cho Câu 4 Đề mới): Trang Báo cáo Lọc tùy biến + Tính tổng cuối bảng
+# ------------------------------------------------------------------------------
+def bao_cao_view(request):
+    # 1. Lấy tất cả bản ghi bảng chính, sắp xếp theo ngày tăng dần ("start_date")
+    danh_sach = BangChinh.objects.all().order_by("start_date")
+
+    # 2. Lấy dữ liệu lọc từ các ô input trên giao diện (method="get")
+    tu_ngay = request.GET.get("tu_ngay", "").strip()
+    den_ngay = request.GET.get("den_ngay", "").strip()
+    chuyen_mon = request.GET.get("chuyen_mon", "").strip()
+
+    # 3. Lọc theo Từ ngày (__gte là lớn hơn hoặc bằng >=)
+    if tu_ngay:
+        danh_sach = danh_sach.filter(start_date__gte=tu_ngay)
+
+    # 4. Lọc theo Đến ngày (__lte là nhỏ hơn hoặc bằng <=)
+    if den_ngay:
+        danh_sach = danh_sach.filter(start_date__lte=den_ngay)
+
+    # 5. Lọc theo chữ / chuyên môn:
+    # - Nếu lọc trực tiếp trường của BangChinh: danh_sach.filter(name__icontains=chuyen_mon)
+    # - Nếu lọc xuyên qua bảng trung gian (BangChinh -> lessons -> instructors -> expertise):
+    if chuyen_mon:
+        danh_sach = danh_sach.filter(
+            lessons__instructors__expertise__icontains=chuyen_mon
+        ).distinct()
+
+    # 6. Duyệt từng dòng để đếm số lượng đăng ký & cộng dồn tổng cuối bảng
+    danh_sach_ket_qua = []
+    tong_luot_dang_ky = 0
+
+    for item in danh_sach:
+        # Lấy danh sách giảng viên/người phụ trách liên kết với mục này:
+        ds_nguoi_phu_trach = BangPhu.objects.filter(lessons__course=item).distinct()
+
+        # Đếm số lượt đăng ký của mục này:
+        so_luong_dang_ky = item.enrollments.count()
+
+        # Cộng vào tổng số lượt đăng ký toàn bảng:
+        tong_luot_dang_ky = tong_luot_dang_ky + so_luong_dang_ky
+
+        danh_sach_ket_qua.append({
+            "main_item": item,
+            "sub_items": ds_nguoi_phu_trach,
+            "count": so_luong_dang_ky,
+        })
+
+    context = {
+        "danh_sach_ket_qua": danh_sach_ket_qua,
+        "tong_so_muc": len(danh_sach_ket_qua),
+        "tong_luot_dang_ky": tong_luot_dang_ky,
+        "tu_ngay": tu_ngay,
+        "den_ngay": den_ngay,
+        "chuyen_mon": chuyen_mon,
+    }
+    return render(request, "ten_app/report.html", context)
+
+
+# ------------------------------------------------------------------------------
+# MẪU VIEW 4 (Dùng cho Đề 105, Bài 2 Chương 2): Xem chi tiết 1 bản ghi theo ID
+# ------------------------------------------------------------------------------
+def xem_chi_tiet_view(request, id):
+    doi_tuong = get_object_or_404(BangChinh, id=id)
+    return render(request, "ten_app/detail.html", {"doi_tuong": doi_tuong})
+
+
+================================================================================
+[MUC9] CÔNG THỨC VIẾT `urls.py` VÀ CÁC FILE GIAO DIỆN HTML + CSS CHUẨN
+================================================================================
+
+9.1. FILE `ten_app/urls.py`:
+Tùy theo đề yêu cầu đường dẫn tên là gì, bạn khai báo đúng đường dẫn đó:
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # 1. Đường dẫn trang Form đăng ký / thêm mới:
+    path("", views.dang_ky_view, name="ten_url_dang_ky"),
+
+    # 2. Nếu đề yêu cầu sửa theo ID (như /edit_customer/<int:id>/ hoặc /baiviet/<int:id>/):
+    path("edit/<int:id>/", views.them_hoac_sua_view, name="ten_url_sua"),
+
+    # 3. Đường dẫn trang Báo cáo / Danh sách (như /courses/report/ hoặc /orders/ hoặc /dsbaiviet/):
+    path("courses/report/", views.bao_cao_view, name="ten_url_bao_cao"),
+
+    # 4. Nếu đề yêu cầu trang Xem chi tiết theo ID (như /books/<int:id>/):
+    path("detail/<int:id>/", views.xem_chi_tiet_view, name="ten_url_chi_tiet"),
+]
+
+9.2. FILE `TenProject/urls.py` (Nối URL của App vào Project):
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("ten_app.urls")),  # Nhớ đổi `ten_app` đúng tên app của bạn
+]
+
+
+9.3. FILE `ten_app/templates/ten_app/base.html` (Dùng chung mọi đề để lấy +1 điểm CSS):
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Hệ thống Quản lý{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #f4f6f9; }
+        header { background-color: #1e3d59; color: white; padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: white; text-decoration: none; margin-left: 20px; font-weight: bold; }
+        main { max-width: 1050px; margin: 25px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #dcdcdc; padding: 10px 12px; text-align: left; }
+        th { background-color: #1e3d59; color: white; }
+        tr:nth-child(even) { background-color: #f9fbfd; }
+        .btn { background-color: #1e3d59; color: white; padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; }
+        .message { background-color: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
+        .errorlist { color: #d9534f; font-weight: bold; list-style: none; padding-left: 0; }
+        footer { text-align: center; padding: 20px; color: #666; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>HỆ THỐNG QUẢN LÝ DỮ LIỆU</h2>
+        <nav>
+            <a href="{% url 'ten_url_dang_ky' %}">Trang Đăng ký / Nhập liệu</a>
+            <a href="{% url 'ten_url_bao_cao' %}">Trang Danh sách / Báo cáo</a>
+            <a href="/admin/">Trang Quản trị (Admin)</a>
+        </nav>
+    </header>
+    <main>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer>© 2026 Django Web Application - MIS3010</footer>
+</body>
+</html>
+
+
+9.4. FILE `ten_app/templates/ten_app/enroll.html` (Mẫu HTML cho mọi bài Form Câu 3):
+
+{% extends "ten_app/base.html" %}
+
+{% block title %}Biểu mẫu nhập thông tin{% endblock %}
+
+{% block content %}
+    {% if instance %}
+        <h2>CHỈNH SỬA THÔNG TIN</h2>
+    {% else %}
+        <h2>ĐĂNG KÝ / THÊM MỚI THÔNG TIN</h2>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Lưu thông tin</button>
+    </form>
+{% endblock %}
+
+
+9.5. FILE `ten_app/templates/ten_app/report.html` (Mẫu HTML cho mọi bài Báo cáo Câu 4):
+
+{% extends "ten_app/base.html" %}
+
+{% block title %}Báo cáo danh sách{% endblock %}
+
+{% block content %}
+<h2>DANH SÁCH BÁO CÁO THEO ĐIỀU KIỆN</h2>
+
+<!-- Bộ lọc GET -->
+<form method="get" style="background: #eef3f8; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+    <label>Từ ngày:</label>
+    <input type="date" name="tu_ngay" value="{{ tu_ngay }}">
+
+    <label style="margin-left: 15px;">Đến ngày:</label>
+    <input type="date" name="den_ngay" value="{{ den_ngay }}">
+
+    <label style="margin-left: 15px;">Từ khóa / Chuyên môn:</label>
+    <input type="text" name="chuyen_mon" value="{{ chuyen_mon }}" placeholder="Không bắt buộc">
+
+    <button type="submit" class="btn" style="margin-left: 10px;">Lọc dữ liệu</button>
+</form>
+
+{% if danh_sach_ket_qua %}
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên / Tiêu đề</th>
+                <th>Ngày tháng</th>
+                <th>Địa điểm / Thông tin</th>
+                <th>Danh sách liên kết</th>
+                <th>Số lượng đăng ký</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in danh_sach_ket_qua %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ row.main_item.name }}</td>
+                <td>{{ row.main_item.start_date|date:"d/m/Y" }}</td>
+                <td>{{ row.main_item.venue }}</td>
+                <td>
+                    {% for sub in row.sub_items %}
+                        {{ sub.full_name }} ({{ sub.expertise }}){% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        Chưa có dữ liệu
+                    {% endfor %}
+                </td>
+                <td>{{ row.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 15px; padding: 12px; background: #eef3f8; font-weight: bold;">
+        <p style="margin: 5px 0;">Tổng số mục: {{ tong_so_muc }}</p>
+        <p style="margin: 5px 0;">Tổng số lượt đăng ký: {{ tong_luot_dang_ky }}</p>
+    </div>
+{% else %}
+    <p><strong>Không có khóa đào tạo nào.</strong></p>
+    <!-- Chú ý: Sửa câu thông báo trống ở trên đúng từng chữ theo yêu cầu của đề thi -->
+{% endif %}
+{% endblock %}
+================================================================================

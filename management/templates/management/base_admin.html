@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Quản lý nội dung | DOL IELTS Đình Lực{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/management-legacy.css' %}"><link rel="stylesheet" href="{% static 'css/teacher.css' %}"><link rel="stylesheet" href="{% static 'css/teacher-support.css' %}">{% block extra_css %}{% endblock %}{% endblock %}
+{% block content %}<div class="teacher-layout">{% include 'management/_sidebar.html' %}<section class="teacher-workspace"><div class="teacher-toolbar"><div><span class="teacher-eyebrow">DOL IELTS / QUẢN LÝ</span><h1 class="teacher-layout-title">{% block teacher_heading %}Quản lý nội dung{% endblock %}</h1></div><a class="teacher-back" href="{% url 'home' %}">↗ Xem giao diện học viên</a></div><div class="admin-main">{% block breadcrumb %}{% endblock %}{% block management_content %}{% endblock %}</div></section></div>{% endblock %}

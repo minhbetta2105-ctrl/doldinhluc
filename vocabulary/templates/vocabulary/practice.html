@@ -1,0 +1,267 @@
+{% extends "accounts/layout.html" %}
+{% load vocab_tags %}
+{% block title %}Luyện tập từ vựng - {{ topic.name }}{% endblock %}
+{% block head %}
+<style>
+  .types{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  .types form{margin:0}
+  .typecard{width:100%;display:flex;gap:14px;align-items:center;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .typecard:hover:not([disabled]){border-color:#f0a5a8}
+  .typecard.on{background:#fff1f1;border-color:var(--red);color:var(--red)}
+  .typecard[disabled]{opacity:.5;cursor:not-allowed}
+  .typecard .ico{width:40px;height:40px;border-radius:10px;background:#f3f4f6;display:grid;place-items:center;flex:none;color:#4b5563}
+  .typecard.on .ico{background:#fff;color:var(--red)}
+  .typecard b{display:block;font-size:1rem} .typecard small{display:block;color:var(--muted);font-size:.82rem;margin-top:2px}
+  .main{padding:26px 28px}
+  .plabel{font-weight:700;font-size:.92rem;margin-bottom:8px}
+  .pbar{height:5px;background:#eceef1;border-radius:9px;overflow:hidden;margin-bottom:22px}
+  .pbar i{display:block;height:100%;width:0;background:var(--red);transition:width .2s}
+  .qt{font-size:1.5rem;line-height:1.3;margin:0 0 18px;font-weight:700}
+  .qt .sent{display:block;font-size:1.15rem;font-weight:500;margin-top:10px}
+  .opts{display:flex;flex-direction:column;gap:10px;counter-reset:o}
+  .opt{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:14px 16px;cursor:pointer;background:#fff}
+  .opt input{accent-color:var(--red);width:18px;height:18px;margin:0}
+  .opt .t::before{counter-increment:o;content:counter(o,upper-alpha) ". "}
+  .opt:has(input:checked){background:#fff1f1;border-color:var(--red);color:var(--red-dark)}
+  .step[hidden]{display:none}
+  .foot2{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:26px;padding-top:20px}
+  .foot2 .hint{color:var(--muted);font-size:.82rem;flex:1;text-align:center;min-width:200px}
+  .match-row{display:grid;grid-template-columns:minmax(140px,1fr) 2fr;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+  .bank{display:flex;flex-wrap:wrap;gap:8px;min-height:50px;padding:12px;border:1px dashed #c3c8d2;border-radius:10px;background:#fafafb;margin-bottom:20px}
+  .chipw{display:inline-block;padding:6px 14px;border:1px solid #cfd4dc;border-radius:99px;background:#fff;cursor:grab;user-select:none}
+  .chipw.sel{background:var(--red);border-color:var(--red);color:#fff}
+  .gap{font-size:1.08rem;margin:0 0 18px}
+  .blank{display:inline-block;min-width:120px;min-height:34px;vertical-align:middle;margin:0 4px;padding:2px 4px;border-bottom:2px solid var(--red);background:#fff1f1;border-radius:4px 4px 0 0;text-align:center}
+  .blank .chipw{cursor:pointer}
+  .warnbox{background:var(--warn-bg);border:1px solid #f1dc9b;color:var(--warn);border-radius:10px;padding:12px 14px;margin:12px 0;font-size:.9rem}
+  .wicon{width:44px;height:44px;border-radius:50%;background:var(--warn-bg);color:#d28a00;display:grid;place-items:center;font-weight:800;font-size:1.3rem;flex:none}
+  @media (max-width:800px){.types{grid-template-columns:1fr}.match-row{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block crumbs %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><a href="{% url 'vocabulary:topic_list' %}">Vocabulary</a><i>/</i><a href="{% url 'vocabulary:topic_detail' pk=topic.pk %}">{{ topic.name }}</a><i>/</i><b>Luyện tập</b></nav>{% endblock %}
+{% block account_content %}
+<h1>Luyện tập từ vựng</h1>
+<p class="sub">Chủ đề {{ topic.name }} – Trình độ {{ topic.level|level_vi }}</p>
+
+<div class="types">
+  {% for t in types %}
+    <form method="post" action="{% url 'vocabulary:start_practice' pk=topic.pk %}" class="typeform">
+      {% csrf_token %}
+      <input type="hidden" name="exercise_type" value="{{ t.value }}">
+      <button type="submit" class="typecard {% if t.value == run.exercise_type %}on{% endif %}" {% if not t.ok or t.value == run.exercise_type %}disabled{% endif %}>
+        <span class="ico">
+          {% if t.value == "MCQ" %}<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l2 2 3-3M3 13l2 2 3-3M12 7h9M12 14h9"/></svg>
+          {% elif t.value == "MATCH" %}<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
+          {% else %}<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="6" r="1.6"/><circle cx="12" cy="6" r="1.6"/><circle cx="18" cy="6" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/><circle cx="6" cy="18" r="1.6"/><circle cx="12" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>{% endif %}
+        </span>
+        <span>
+          {% if t.value == "MCQ" %}<b>Trắc nghiệm</b><small>Chọn nghĩa phù hợp của từ</small>
+          {% elif t.value == "MATCH" %}<b>Nối từ</b><small>Nối từ tiếng Anh với nghĩa được xáo trộn</small>
+          {% else %}<b>Kéo &amp; Thả</b><small>Kéo từ trong ngân hàng từ để hoàn thành câu</small>{% endif %}
+          {% if not t.ok %}<small>(chưa đủ dữ liệu)</small>{% endif %}
+        </span>
+      </button>
+    </form>
+  {% endfor %}
+</div>
+
+<form id="practice-form" class="card main" method="post" action="{% url 'vocabulary:submit_practice' key=run.key %}">
+  {% csrf_token %}
+  <div class="plabel" id="plabel"></div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  {% if run.exercise_type == "MCQ" %}
+    {% for q in questions %}
+      <section class="step" {% if not forloop.first %}hidden{% endif %}>
+        <h2 class="qt">
+          {% if q.type == "MCQ_WORD" %}Chọn từ phù hợp điền vào chỗ trống:<span class="sent">{{ q.prompt }}</span>
+          {% else %}{{ q.prompt }} có nghĩa là gì?{% endif %}
+        </h2>
+        <div class="opts">
+          {% for opt in q.options %}
+            <label class="opt"><input type="radio" name="q{{ q.no }}" value="{{ opt }}"><span class="t">{{ opt }}</span></label>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+
+  {% elif run.exercise_type == "MATCH" %}
+    <p class="help" style="margin:0 0 6px">Chọn nghĩa tương ứng cho từng từ. Mỗi cặp tính một điểm.</p>
+    {% for q in questions %}
+      <div class="match-row">
+        <div><strong>{{ q.no }}. {{ q.prompt }}</strong> <span class="help">{{ q.phonetic }}</span></div>
+        <select name="q{{ q.no }}" aria-label="Nghĩa của {{ q.prompt }}">
+          <option value="">Chọn nghĩa</option>
+          {% for opt in q.options %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+        </select>
+      </div>
+    {% endfor %}
+
+  {% else %}
+    <p class="help" style="margin:0 0 10px">Kéo từ trong ngân hàng thả vào ô trống, hoặc bấm vào từ rồi bấm vào ô trống. Bấm vào từ đã đặt để trả về ngân hàng.</p>
+    <div id="bank" class="bank" aria-label="Ngân hàng từ">
+      {% for w in bank %}<span class="chipw" role="button" tabindex="0" draggable="true" data-id="c{{ forloop.counter }}" data-text="{{ w }}">{{ w }}</span>{% endfor %}
+    </div>
+    {% for q in questions %}
+      <p class="gap">{{ q.no }}. {{ q.before }}<span class="blank" tabindex="0" data-q="{{ q.no }}" aria-label="Ô trống {{ q.no }}"></span>{{ q.after }}
+        <input type="hidden" name="q{{ q.no }}" value=""></p>
+    {% endfor %}
+  {% endif %}
+
+  <div class="foot2">
+    <div class="row">
+      {% if run.exercise_type == "MCQ" %}
+        <button type="button" class="btn plain" id="prev">&larr; Câu trước</button>
+        <button type="button" class="btn plain" id="next">Câu tiếp theo &rarr;</button>
+      {% else %}
+        <a class="btn plain" href="{% url 'vocabulary:topic_detail' pk=topic.pk %}">Thoát</a>
+      {% endif %}
+    </div>
+    <span class="hint">Bạn có thể đổi đáp án hoặc bỏ qua câu chưa trả lời trước khi nộp bài.</span>
+    <button type="button" class="btn" id="open-submit">Nộp bài</button>
+  </div>
+</form>
+
+<dialog id="submit-dialog">
+  <div class="in">
+    <div class="row" style="gap:14px;margin-bottom:8px"><span class="wicon">!</span><h3 style="margin:0">Xác nhận nộp bài</h3></div>
+    <p class="sub" style="margin:10px 0 0">Bạn có chắc chắn muốn nộp bài luyện từ vựng này?</p>
+    <div class="summary">
+      <div><span>Chủ đề:</span><b>{{ topic.name }}</b></div>
+      <div><span>Dạng bài:</span><b>{{ type_label }}</b></div>
+      <div><span>Tổng số câu:</span><b id="d-total"></b></div>
+      <div><span>Đã trả lời:</span><b id="d-done"></b></div>
+    </div>
+    <div class="warnbox" id="d-warn" hidden></div>
+    <div class="row" style="margin-top:14px">
+      <button type="button" class="btn plain" id="d-back" style="flex:1;justify-content:center">Làm tiếp</button>
+      <button type="button" class="btn" id="d-go" style="flex:1;justify-content:center">Vẫn nộp</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var form = document.getElementById('practice-form');
+  var type = '{{ run.exercise_type }}';
+  var total = {{ questions|length }};
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var cur = 0, dirty = false, submitting = false;
+  var label = document.getElementById('plabel'), bar = document.getElementById('pbar');
+  var prev = document.getElementById('prev'), next = document.getElementById('next');
+  var dlg = document.getElementById('submit-dialog');
+
+  function answered() {
+    var fd = new FormData(form), n = 0;
+    for (var i = 1; i <= total; i++) { if (fd.get('q' + i)) n++; }
+    return n;
+  }
+  function refresh() {
+    if (type === 'MCQ') {
+      steps.forEach(function (s, i) { s.hidden = (i !== cur); });
+      label.textContent = 'Câu ' + (cur + 1) + '/' + total;
+      bar.style.width = ((cur + 1) / total * 100) + '%';
+      prev.disabled = (cur === 0);
+      next.disabled = (cur === total - 1);
+    } else {
+      var a = answered();
+      label.textContent = 'Đã trả lời ' + a + '/' + total;
+      bar.style.width = (a / total * 100) + '%';
+    }
+  }
+  function markDirty() { dirty = true; refresh(); }
+
+  if (prev) prev.addEventListener('click', function () { if (cur > 0) { cur--; refresh(); } });
+  if (next) next.addEventListener('click', function () { if (cur < total - 1) { cur++; refresh(); } });
+  form.addEventListener('change', markDirty);
+
+  document.getElementById('open-submit').addEventListener('click', function () {
+    var a = answered(), left = total - a;
+    document.getElementById('d-total').textContent = total;
+    document.getElementById('d-done').textContent = a + '/' + total;
+    var warn = document.getElementById('d-warn');
+    if (left > 0) {
+      warn.hidden = false;
+      warn.innerHTML = '<strong>Bạn còn ' + left + ' câu chưa trả lời.</strong> Các câu bỏ trống sẽ được tính là không đúng.';
+      document.getElementById('d-go').textContent = 'Vẫn nộp';
+    } else {
+      warn.hidden = true;
+      document.getElementById('d-go').textContent = 'Nộp bài';
+    }
+    dlg.showModal();
+  });
+  document.getElementById('d-back').addEventListener('click', function () { dlg.close(); });
+  document.getElementById('d-go').addEventListener('click', function () { submitting = true; form.submit(); });
+
+  document.querySelectorAll('.typeform').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      if (dirty && !confirm('Chuyển dạng bài sẽ bỏ bài đang làm. Tiếp tục?')) { e.preventDefault(); return; }
+      submitting = true;
+    });
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (dirty && !submitting) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  /* ---- Kéo & Thả ---- */
+  var bank = document.getElementById('bank');
+  if (bank) {
+    var selected = null, dragged = null;
+    var inputFor = function (blank) { return form.querySelector('input[name="q' + blank.getAttribute('data-q') + '"]'); };
+    var deselect = function () { if (selected) { selected.classList.remove('sel'); selected = null; } };
+    var sendBack = function (chip) {
+      var from = chip.parentElement;
+      if (from && from.classList.contains('blank')) { inputFor(from).value = ''; }
+      chip.classList.remove('sel');
+      bank.appendChild(chip);
+      markDirty();
+    };
+    var place = function (chip, blank) {
+      var old = blank.querySelector('.chipw');
+      if (old && old !== chip) { sendBack(old); }
+      var from = chip.parentElement;
+      if (from && from.classList.contains('blank') && from !== blank) { inputFor(from).value = ''; }
+      chip.classList.remove('sel');
+      blank.appendChild(chip);
+      inputFor(blank).value = chip.getAttribute('data-text');
+      deselect();
+      markDirty();
+    };
+    document.addEventListener('click', function (e) {
+      var chip = e.target.closest('.chipw'), blank = e.target.closest('.blank');
+      if (chip) {
+        if (chip.parentElement.classList.contains('blank')) { sendBack(chip); return; }
+        if (selected === chip) { deselect(); return; }
+        deselect(); selected = chip; chip.classList.add('sel');
+        return;
+      }
+      if (blank && selected) { place(selected, blank); }
+    });
+    document.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.chipw, .blank')) {
+        e.preventDefault(); e.target.click();
+      }
+    });
+    document.addEventListener('dragstart', function (e) {
+      var c = e.target.closest && e.target.closest('.chipw');
+      if (!c) return;
+      dragged = c;
+      e.dataTransfer.setData('text/plain', c.getAttribute('data-id'));
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    document.addEventListener('dragover', function (e) {
+      if (dragged && (e.target.closest('.blank') || e.target.closest('#bank'))) { e.preventDefault(); }
+    });
+    document.addEventListener('drop', function (e) {
+      if (!dragged) return;
+      var blank = e.target.closest('.blank');
+      if (blank) { e.preventDefault(); place(dragged, blank); }
+      else if (e.target.closest('#bank')) { e.preventDefault(); sendBack(dragged); }
+      dragged = null;
+    });
+    document.addEventListener('dragend', function () { dragged = null; });
+  }
+  refresh();
+})();
+</script>
+{% endblock %}

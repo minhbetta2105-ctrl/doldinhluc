@@ -1,0 +1,19 @@
+<aside class="teacher-sidebar" aria-label="Điều hướng quản lý">
+ <div class="sidebar-heading"><span>KHÔNG GIAN GIÁO VIÊN</span><p>Quản lý nội dung và học viên theo quyền được cấp</p></div>
+ <a class="teacher-side-link {% if request.resolver_match.url_name == 'dashboard' %}is-current{% endif %}" href="{% url 'management:dashboard' %}">▦ <span>Tổng quan</span></a>
+ <div class="side-category">QUẢN LÝ BÀI LUYỆN</div>
+ {% if user.is_superuser or perms.receptive.view_exercise or perms.listening.view_listeningexercise %}<a class="teacher-side-link {% if active_nav == 'listening_manage' %}is-current{% endif %}" href="{% url 'management:listening_exercise_list' %}">♫ <span>Listening</span></a>{% endif %}
+ {% if user.is_superuser or perms.receptive.view_exercise or perms.reading.view_readingexercise %}<a class="teacher-side-link {% if active_nav == 'reading_manage' %}is-current{% endif %}" href="{% url 'management:reading_exercise_list' %}">▤ <span>Reading</span></a>{% endif %}
+ {% if user.is_superuser or perms.writing.view_writingprompt %}<a class="teacher-side-link {% if active_nav == 'writing_tasks' %}is-current{% endif %}" href="{% url 'management:writing_prompt_list' %}">✎ <span>Writing</span></a>{% endif %}
+ {% if user.is_superuser or perms.speaking.view_speakingexercise %}<a class="teacher-side-link {% if active_nav == 'speaking_tasks' %}is-current{% endif %}" href="{% url 'management:speaking_exercise_list' %}">◉ <span>Speaking</span></a>{% endif %}
+ {% if user.is_superuser or perms.vocabulary.view_topic %}<a class="teacher-side-link {% if request.resolver_match.namespace == 'vocabulary' %}is-current{% endif %}" href="{% url 'vocabulary:manage_topics' %}">▣ <span>Vocabulary</span></a>{% endif %}
+ {% if user.is_superuser or perms.writing.view_writingsupport or perms.speaking.view_speakingsupport %}<div class="side-category">TÀI LIỆU HỖ TRỢ</div>{% endif %}
+ {% if user.is_superuser or perms.writing.view_writingsupport %}<a class="teacher-side-link {% if active_nav == 'support_materials' %}is-current{% endif %}" href="{% url 'management:writing_support_index' %}">▹ <span>Hỗ trợ Writing</span></a>{% endif %}
+ {% if user.is_superuser or perms.speaking.view_speakingsupport %}<a class="teacher-side-link {% if active_nav == 'speaking_support_materials' %}is-current{% endif %}" href="{% url 'management:speaking_support_index' %}">▹ <span>Hỗ trợ Speaking</span></a>{% endif %}
+ <div class="side-category">THEO DÕI HỌC TẬP</div>
+ {% if user.is_superuser or perms.auth.view_user %}<a class="teacher-side-link {% if active_nav == 'student_progress' %}is-current{% endif %}" href="{% url 'management:student_progress_list' %}">▤ <span>Tiến độ học viên</span></a>{% endif %}
+ <div class="side-category">HỆ THỐNG</div>
+ {% if user.is_superuser or perms.feedback.view_servicefeedback %}<a class="teacher-side-link {% if active_nav == 'feedback_manage' %}is-current{% endif %}" href="{% url 'feedback:feedback_list' %}">☏ <span>Đánh giá / Góp ý</span></a>{% endif %}
+ {% if user.is_superuser or perms.auth.view_user or perms.auth.change_user %}<a class="teacher-side-link" href="{% url 'accounts:manage_users' %}">♙ <span>Tài khoản học viên</span></a>{% endif %}
+ <div class="sidebar-bottom"><a href="{% url 'home' %}">← Về trang chủ</a><a href="{% url 'accounts:profile' %}">Hồ sơ</a></div>
+</aside>

@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+{% load receptive_tags %}
+
+{% block title %}{{ exercise.title }} - Luyện tập Listening{% endblock %}
+
+{% block extra_head %}
+<style>
+    .test-header {
+        background: #ffffff;
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 24px;
+        position: sticky;
+        top: 72px;
+        z-index: 90;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .test-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 24px;
+        margin-top: 24px;
+        align-items: start;
+    }
+
+    .content-column {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* Audio Player Box (Hình 49) */
+    .audio-player-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 150px;
+        z-index: 80;
+    }
+
+    .audio-player-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .audio-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .audio-custom-wrapper {
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .audio-controls-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .audio-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #2563eb;
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background 0.2s;
+        flex-shrink: 0;
+    }
+
+    .audio-btn:hover {
+        background: #1d4ed8;
+    }
+
+    .audio-progress-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .audio-seekbar {
+        width: 100%;
+        cursor: pointer;
+        accent-color: #2563eb;
+    }
+
+    .audio-time-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #64748b;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .audio-speed-select {
+        padding: 6px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        background: white;
+        cursor: pointer;
+        color: #334155;
+    }
+
+    .questions-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .question-card {
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .question-card:last-child {
+        border-bottom: none;
+    }
+
+    .question-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 14px;
+    }
+
+    .options-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .option-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .option-label:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    .option-label.selected {
+        background: #eff6ff;
+        border-color: #3b82f6;
+        color: #1e3a8a;
+    }
+
+    .text-answer-input {
+        width: 100%;
+        max-width: 400px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        outline: none;
+    }
+
+    .text-answer-input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Right Sidebar (Palette) */
+    .sidebar-palette {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 150px;
+    }
+
+    .palette-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin: 16px 0;
+    }
+
+    .palette-btn {
+        height: 38px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        background: #ffffff;
+        color: #475569;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .palette-btn:hover {
+        border-color: #94a3b8;
+    }
+
+    .palette-btn.answered {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-card {
+        background: white;
+        border-radius: var(--radius-md);
+        max-width: 440px;
+        width: 90%;
+        padding: 32px;
+        text-align: center;
+        box-shadow: var(--shadow-md);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="listening-form" method="POST" action="{% url 'listening:exercise_submit' exercise.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="submission_key" value="{{ submission_key }}">
+    <input type="hidden" name="started_at" value="{{ started_at }}">
+
+    <!-- Header làm bài (Hình 49) -->
+    <div class="test-header">
+        <div>
+            <div class="breadcrumb" style="margin-bottom: 4px;">
+                <a href="{% url 'listening:exercise_list' %}">Listening</a>
+                <span>/</span>
+                <span>{{ exercise.title }}</span>
+            </div>
+            <h1 style="font-size: 20px; font-weight: 700; color: #1e293b;">{{ exercise.title }}</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px;
+                         {% if exercise.level == 'BEGINNER' %}background: #ecfdf5; color: #059669;
+                         {% elif exercise.level == 'INTERMEDIATE' %}background: #eff6ff; color: #2563eb;
+                         {% else %}background: #fef2f2; color: #dc2626;{% endif %}">
+                {{ exercise.get_level_display }}
+            </span>
+            <button type="button" class="btn btn-primary" onclick="openSubmitModal()">
+                Nộp bài
+            </button>
+        </div>
+    </div>
+
+    <!-- Bố cục 2 cột (Hình 49) -->
+    <div class="test-layout">
+        <!-- Cột nội dung (Audio + Câu hỏi) -->
+        <div class="content-column">
+            <!-- Audio Player -->
+            <div class="audio-player-box">
+                <div class="audio-player-header">
+                    <span style="font-size: 24px; color: #2563eb;">🎧</span>
+                    <div>
+                        <div class="audio-title">Bản ghi âm bài nghe</div>
+                        <div style="font-size: 13px; color: #64748b;">Nghe cẩn thận và trả lời các câu hỏi bên dưới</div>
+                    </div>
+                </div>
+
+                {% if exercise.audio_file %}
+                    <div class="audio-custom-wrapper">
+                        <audio id="audio-elem" src="{{ exercise.audio_file.url }}" preload="metadata"></audio>
+                        <div class="audio-controls-row">
+                            <button type="button" id="play-pause-btn" class="audio-btn" onclick="togglePlay()">
+                                ▶
+                            </button>
+                            <div class="audio-progress-container">
+                                <input type="range" id="audio-seekbar" class="audio-seekbar" value="0" min="0" max="100" step="0.1" oninput="onSeek(this.value)">
+                                <div class="audio-time-row">
+                                    <span id="current-time">00:00</span>
+                                    <span id="duration-time">--:--</span>
+                                </div>
+                            </div>
+                            <select id="playback-speed" class="audio-speed-select" onchange="changeSpeed(this.value)">
+                                <option value="0.75">0.75x</option>
+                                <option value="1.0" selected>1.0x</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                            </select>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="background: #fff0f0; border: 1px solid #fecaca; border-radius: var(--radius-sm); padding: 16px; color: #b91c1c; font-size: 14px;">
+                        ⚠️ Chưa có file âm thanh cho bài nghe này.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Khung danh sách câu hỏi -->
+            <div class="questions-box">
+                <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px;">
+                    Danh sách câu hỏi ({{ total_questions }} câu)
+                </h2>
+
+                {% for q in questions %}
+                    <div class="question-card" id="q-box-{{ q.id }}">
+                        <div class="question-title">
+                            <span style="color: #2563eb; font-weight: 700;">Câu {{ q.order_no }}:</span>
+                            {{ q.question_text }}
+                        </div>
+
+                        {% if q.options.all %}
+                            <!-- Trắc nghiệm / Lựa chọn (MCQ, MATCHING, TFNG, YNNG) -->
+                            <div class="options-group">
+                                {% for opt in q.options.all %}
+                                    <label class="option-label" onclick="selectOption(this, {{ q.id }})">
+                                        <input type="radio" name="answer_{{ q.id }}" value="{{ opt.option_key }}" style="accent-color: #2563eb;" onchange="updateProgress({{ q.id }})">
+                                        {{ opt|option_label }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <!-- Điền đáp án ngắn (SHORT_TEXT) -->
+                            <div>
+                                <input type="text" name="answer_{{ q.id }}" class="text-answer-input" placeholder="Nhập câu trả lời của bạn..." oninput="updateProgress({{ q.id }})">
+                            </div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p style="color: #64748b; font-size: 14px;">Bài luyện chưa có câu hỏi nào được công bố.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Cột bảng câu hỏi bên phải (Question Palette) -->
+        <div class="sidebar-palette">
+            <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Tiến trình làm bài</h3>
+            <p id="answered-counter" style="font-size: 13px; color: #64748b;">Đã trả lời: 0/{{ total_questions }}</p>
+
+            <div class="palette-grid">
+                {% for q in questions %}
+                    <a href="#q-box-{{ q.id }}" id="palette-btn-{{ q.id }}" class="palette-btn">
+                        {{ q.order_no }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748b;">
+                    <span style="width: 14px; height: 14px; background: #2563eb; border-radius: 3px; display: inline-block;"></span>
+                    <span>Đã trả lời</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748b;">
+                    <span style="width: 14px; height: 14px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 3px; display: inline-block;"></span>
+                    <span>Chưa trả lời</span>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 12px;" onclick="openSubmitModal()">
+                Nộp bài
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Modal xác nhận nộp bài (UC-LIS-03 & Hình 51) -->
+<div id="submit-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="font-size: 40px; margin-bottom: 16px;">📝</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 10px;">Xác nhận nộp bài</h3>
+        <p id="modal-msg" style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 24px;">
+            Bạn có chắc chắn muốn nộp bài Listening này không?
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button" class="btn btn-outline" onclick="closeSubmitModal()">Ở lại làm tiếp</button>
+            <button type="button" class="btn btn-primary" onclick="confirmSubmit()">Nộp bài ngay</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Audio Player Logic
+    const audio = document.getElementById('audio-elem');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const seekbar = document.getElementById('audio-seekbar');
+    const currentTimeElem = document.getElementById('current-time');
+    const durationTimeElem = document.getElementById('duration-time');
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return "00:00";
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    if (audio) {
+        audio.addEventListener('loadedmetadata', () => {
+            durationTimeElem.innerText = formatTime(audio.duration);
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            currentTimeElem.innerText = formatTime(audio.currentTime);
+            if (audio.duration) {
+                seekbar.value = (audio.currentTime / audio.duration) * 100;
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            playPauseBtn.innerText = '▶';
+        });
+    }
+
+    function togglePlay() {
+        if (!audio) return;
+        if (audio.paused) {
+            audio.play();
+            playPauseBtn.innerText = '⏸';
+        } else {
+            audio.pause();
+            playPauseBtn.innerText = '▶';
+        }
+    }
+
+    function onSeek(val) {
+        if (!audio || !audio.duration) return;
+        audio.currentTime = (val / 100) * audio.duration;
+    }
+
+    function changeSpeed(speed) {
+        if (!audio) return;
+        audio.playbackRate = parseFloat(speed);
+    }
+
+    // Question & Palette Logic
+    const totalQuestions = {{ total_questions }};
+    const answeredSet = new Set();
+
+    function updateProgress(questionId) {
+        let isAnswered = false;
+        const radios = document.querySelectorAll(`input[name="answer_${questionId}"][type="radio"]`);
+        if (radios.length > 0) {
+            for (let r of radios) {
+                if (r.checked) { isAnswered = true; break; }
+            }
+        } else {
+            const txt = document.querySelector(`input[name="answer_${questionId}"][type="text"]`);
+            if (txt && txt.value.trim().length > 0) {
+                isAnswered = true;
+            }
+        }
+
+        const btn = document.getElementById(`palette-btn-${questionId}`);
+        if (isAnswered) {
+            answeredSet.add(questionId);
+            if (btn) btn.classList.add('answered');
+        } else {
+            answeredSet.delete(questionId);
+            if (btn) btn.classList.remove('answered');
+        }
+
+        document.getElementById('answered-counter').innerText = `Đã trả lời: ${answeredSet.size}/${totalQuestions}`;
+    }
+
+    function selectOption(labelElem, questionId) {
+        const parent = labelElem.closest('.options-group');
+        parent.querySelectorAll('.option-label').forEach(lbl => lbl.classList.remove('selected'));
+        labelElem.classList.add('selected');
+        updateProgress(questionId);
+    }
+
+    function openSubmitModal() {
+        const remaining = totalQuestions - answeredSet.size;
+        const msgElem = document.getElementById('modal-msg');
+        if (remaining > 0) {
+            msgElem.innerHTML = `Bạn vẫn còn <strong>${remaining}</strong> câu hỏi chưa trả lời.<br>Các câu bỏ trống sẽ không được tính điểm. Bạn có chắc chắn muốn nộp bài?`;
+        } else {
+            msgElem.innerHTML = `Bạn đã hoàn thành đủ <strong>${totalQuestions}/${totalQuestions}</strong> câu hỏi.<br>Sau khi nộp, bạn sẽ nhận được kết quả và lời giải thích chi tiết.`;
+        }
+        document.getElementById('submit-modal').classList.add('active');
+    }
+
+    function closeSubmitModal() {
+        document.getElementById('submit-modal').classList.remove('active');
+    }
+
+    function confirmSubmit() {
+        document.getElementById('listening-form').submit();
+    }
+
+    // Cảnh báo khi rời bài khi chưa nộp (A5)
+    window.addEventListener('beforeunload', function (e) {
+        if (answeredSet.size > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    document.getElementById('listening-form').addEventListener('submit', function() {
+        window.removeEventListener('beforeunload', () => {});
+    });
+  // Place the existing audio and palette in one sticky column. No audio is cloned.
+  document.addEventListener('DOMContentLoaded', function () {
+    const layout = document.querySelector('#listening-form .test-layout');
+    const player = layout && layout.querySelector('.audio-player-box');
+    const palette = layout && layout.querySelector('.sidebar-palette');
+    if (!layout || !player || !palette) return;
+    const controls = document.createElement('aside');
+    controls.className = 'listening-sticky-controls';
+    controls.setAttribute('aria-label', 'Bản ghi âm và điều hướng câu hỏi');
+    controls.appendChild(player);
+    // Replace the original palette grid item in place; appending the aside
+    // would create an accidental third grid item and move controls below questions.
+    layout.replaceChild(controls, palette);
+    controls.appendChild(palette);
+  });
+</script>
+{% endblock %}

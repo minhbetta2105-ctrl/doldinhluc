@@ -1,0 +1,91 @@
+{% extends "accounts/layout.html" %}
+{% load vocab_tags %}
+{% block title %}Kết quả luyện tập từ vựng{% endblock %}
+{% block head %}
+<style>
+  .info{display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 22px;margin-bottom:18px}
+  .info .sep{width:1px;height:22px;background:var(--line)}
+  .stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+  .st{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+  .st.main{border-color:#f0b4b7}
+  .st .ic{width:48px;height:48px;border-radius:12px;background:#f3f4f6;display:grid;place-items:center;color:#4b5563;font-weight:700;flex:none}
+  .st.main .ic{background:var(--red-bg);color:var(--red)}
+  .st .v{font-size:2rem;font-weight:700;line-height:1}
+  .st.main .v{color:var(--red)}
+  .st small{color:var(--muted);font-size:.85rem}
+  details.ans{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px}
+  details.ans summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px}
+  details.ans summary::-webkit-details-marker{display:none}
+  details.ans summary .n{color:var(--muted);font-size:.85rem}
+  details.ans summary .q{font-weight:600;flex:1}
+  details.ans .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 18px 18px}
+  .box{border-radius:8px;padding:10px 14px;border:1px solid var(--line);background:#f8f9fb}
+  .box small{display:block;color:var(--muted);font-size:.78rem}
+  .box.good{background:var(--ok-bg);border-color:#b7e1c8;color:var(--ok)}
+  .box.badb{background:var(--bad-bg);border-color:#f3c0c3;color:var(--bad)}
+  .box b{font-weight:500}
+  @media (max-width:800px){.stats3{grid-template-columns:1fr}details.ans .cmp{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block crumbs %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><a href="{% url 'vocabulary:topic_list' %}">Vocabulary</a><i>/</i><b>Kết quả</b></nav>{% endblock %}
+{% block account_content %}
+<h1>Kết quả luyện tập từ vựng</h1>
+<p class="sub">Xem lại kết quả và đáp án bài luyện của bạn</p>
+
+<div class="info">
+  <span>Chủ đề: <strong>{{ attempt.topic_snapshot.name }}</strong></span><span class="sep"></span>
+  <span>Dạng bài: <strong>{{ type_label }}</strong></span>
+  <span class="help" style="margin:0">Nộp lúc {{ attempt.submitted_at|date:"d/m/Y H:i" }}</span>
+  <span class="chip ok dot" style="margin-left:auto">Đã hoàn thành</span>
+</div>
+
+<div class="stats3">
+  <div class="st main"><span class="ic">&#10003;</span><div><small>Số câu đúng:</small><div><span class="v">{{ attempt.correct_answers }}/{{ attempt.total_questions }}</span> <small>câu</small></div></div></div>
+  <div class="st"><span class="ic">&#10007;</span><div><small>Số câu sai:</small><div><span class="v">{{ wrong }}</span> <small>câu sai hoặc bỏ trống</small></div></div></div>
+  <div class="st"><span class="ic">%</span><div><small>Tỷ lệ đúng:</small><div><span class="v">{{ attempt.percent }}%</span> <small>của bài luyện</small></div></div></div>
+</div>
+
+<div class="row between" style="margin-bottom:14px">
+  <div><h2 style="margin:0">Chi tiết đáp án</h2><div class="help" style="margin:0">Câu sai hoặc bỏ trống được mở sẵn. Câu bỏ trống được tính là sai.</div></div>
+  <button type="button" class="btn ghost" id="toggle-all">Xem đáp án</button>
+</div>
+
+{% for a in answers %}
+  {% with s=a.question_snapshot %}
+  <details class="ans" {% if not a.is_correct %}open{% endif %}>
+    <summary>
+      <span class="n">Câu {{ a.order_no }}</span>
+      <span class="q">{% if a.question_type == "MCQ_WORD" %}{{ s.prompt }}{% elif a.question_type == "DRAG" %}{{ s.before }}_____{{ s.after }}{% else %}{{ s.prompt }} có nghĩa là gì?{% endif %}</span>
+      {% if a.is_correct %}<span class="chip ok">&#10003; Đúng</span>{% else %}<span class="chip bad">&#10007; Sai</span>{% endif %}
+      <span>&#9662;</span>
+    </summary>
+    <div class="cmp">
+      <div class="box {% if a.is_correct %}good{% else %}badb{% endif %}"><small>Câu trả lời của bạn</small>
+        <b>{% if a.user_answer %}{% if a.is_correct %}&#10003; {% endif %}{{ a.user_answer }}{% else %}&minus; Chưa trả lời{% endif %}</b></div>
+      <div class="box good"><small>Đáp án đúng</small><b>&#10003; {{ s.answer }}</b></div>
+    </div>
+  </details>
+  {% endwith %}
+{% endfor %}
+
+<div class="row between" style="margin-top:22px">
+  <a class="btn plain" href="{% url 'vocabulary:topic_detail' pk=attempt.topic_id %}">&larr; Quay lại chủ đề</a>
+  <div class="row" style="gap:16px">
+    <span class="help" style="margin:0">Luyện lại sẽ tạo lượt mới và giữ nguyên kết quả này.</span>
+    <form method="post" action="{% url 'vocabulary:start_practice' pk=attempt.topic_id %}" style="margin:0">
+      {% csrf_token %}
+      <input type="hidden" name="exercise_type" value="{{ attempt.exercise_type }}">
+      <button class="btn" type="submit">&#8635; Luyện lại</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  var open_ = false;
+  document.getElementById('toggle-all').addEventListener('click', function () {
+    open_ = !open_;
+    document.querySelectorAll('details.ans').forEach(function (d) { d.open = open_; });
+    this.textContent = open_ ? 'Ẩn đáp án' : 'Xem đáp án';
+  });
+</script>
+{% endblock %}

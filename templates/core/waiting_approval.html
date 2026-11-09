@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Chờ phê duyệt tài khoản - DOL IELTS{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 60px auto; text-align: center; background: white; padding: 48px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-md);">
+    <div style="width: 64px; height: 64px; border-radius: 50%; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px;">
+        ⏳
+    </div>
+    <h2 style="font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">Đang chờ cấp quyền Học viên</h2>
+    <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 28px;">
+        {{ message|default:"Tài khoản của bạn đã được đăng ký thành công nhưng chưa thuộc nhóm quyền Học viên (Group HOC_VIEN). Vui lòng liên hệ Quản trị viên để được cấp quyền tham gia luyện tập." }}
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+        <a href="{% url 'home' %}" class="btn btn-outline">Về trang chủ</a>
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary">Đăng nhập tài khoản khác</a>
+    </div>
+</div>
+{% endblock %}

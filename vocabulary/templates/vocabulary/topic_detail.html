@@ -1,0 +1,127 @@
+{% extends "accounts/layout.html" %}
+{% load vocab_tags %}
+{% block title %}{{ topic.name }} - Vocabulary{% endblock %}
+{% block head %}
+<style>
+  .tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin:18px 0 20px}
+  .tabs a{padding:8px 4px;color:var(--ink);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:.93rem}
+  .tabs a.on{color:var(--red);font-weight:700;border-bottom-color:var(--red)}
+  .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .wcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px;position:relative;min-height:130px}
+  .wcard .w{font-size:1.5rem;font-weight:600;line-height:1.2}
+  .wcard .ph{color:var(--muted);font-size:.88rem;display:flex;gap:10px;align-items:center;margin:2px 0 10px}
+  .wcard .ph .chip{border-radius:6px;font-size:.75rem}
+  .wcard .mean{font-weight:500;margin-bottom:8px}
+  .wcard .ex{color:var(--muted);font-size:.88rem} .wcard .ex b{font-style:italic;font-weight:600}
+  .say{position:absolute;right:18px;top:18px;width:36px;height:36px;border-radius:9px;border:0;background:var(--red-bg);color:var(--red);cursor:pointer;display:grid;place-items:center}
+  .say:hover{background:#f9d4d6}
+  .actions{display:flex;justify-content:space-between;gap:12px;margin-top:22px;flex-wrap:wrap}
+  .fcard[hidden]{display:none}
+  .fcard{background:#fff;border:1px solid var(--line);border-radius:14px;max-width:560px;margin:0 auto;min-height:260px;padding:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;user-select:none;position:relative}
+  .fcard .big{font-size:2.2rem;font-weight:700}
+  .fc-nav{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:16px}
+  @media (max-width:800px){.wgrid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block crumbs %}<nav class="crumbs"><a href="{% url 'home' %}">Trang chủ</a><i>/</i><a href="{% url 'vocabulary:topic_list' %}">Vocabulary</a><i>/</i><b>{{ topic.name }}</b></nav>{% endblock %}
+{% block account_content %}
+<div class="row between" style="align-items:flex-start">
+  <div><h1>Từ vựng chủ đề {{ topic.name }}</h1><p class="sub" style="margin:0">Học từ vựng IELTS theo chủ đề</p></div>
+  <div class="row" style="gap:8px"><span class="chip {{ topic.level|level_class }}">{{ topic.get_level_display }}</span><span class="chip">{{ words|length }} từ vựng</span></div>
+</div>
+
+<div class="tabs" role="tablist">
+  <a href="?mode=list" class="{% if mode == 'list' %}on{% endif %}">Danh sách từ vựng</a>
+  <a href="?mode=flashcard" class="{% if mode == 'flashcard' %}on{% endif %}">Flashcard</a>
+</div>
+
+{% if not words %}
+  <div class="card"><p style="margin:0">Chủ đề này chưa có nội dung từ vựng.</p></div>
+{% else %}
+  {% if mode == "list" %}
+    <div class="wgrid">
+      {% for w in words %}
+        <article class="wcard">
+          <button type="button" class="say" data-say="{{ w.word }}" data-audio="{{ w.audio_file }}" aria-label="Nghe phát âm {{ w.word }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+          <div class="w">{{ w.word }}</div>
+          <div class="ph">{{ w.phonetic }}{% if w.part_of_speech %}<span class="chip">{{ w.part_of_speech }}</span>{% endif %}</div>
+          <div class="mean">{{ w.meaning_vi }}</div>
+          {% if w.example_sentence %}<div class="ex"><b>Ví dụ:</b> {{ w.example_sentence }}</div>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div id="flashcards">
+      {% for w in words %}
+        <article class="fcard" hidden tabindex="0" aria-label="Thẻ từ vựng, bấm để lật">
+          <div class="front">
+            <div class="big">{{ w.word }}</div>
+            <p class="help">{{ w.phonetic }}</p>
+            <button type="button" class="say" style="position:static;margin:6px auto" data-say="{{ w.word }}" data-audio="{{ w.audio_file }}" aria-label="Nghe phát âm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+            <p class="help">Bấm vào thẻ để xem nghĩa</p>
+          </div>
+          <div class="back" hidden>
+            <div class="big" style="font-size:1.6rem">{{ w.meaning_vi }}</div>
+            <p class="help">{{ w.phonetic }}{% if w.part_of_speech %} ({{ w.part_of_speech }}){% endif %}</p>
+            {% if w.example_sentence %}<p><em>{{ w.example_sentence }}</em></p>{% endif %}
+          </div>
+        </article>
+      {% endfor %}
+      <div class="fc-nav">
+        <button type="button" class="btn plain" id="fc-prev">&larr; Thẻ trước</button>
+        <span id="fc-count" aria-live="polite"></span>
+        <button type="button" class="btn plain" id="fc-next">Thẻ sau &rarr;</button>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+<div class="actions">
+  <a class="btn plain" href="{% url 'vocabulary:topic_list' %}">&larr; Quay lại chủ đề</a>
+  {% if can_practice %}
+    <form method="post" action="{% url 'vocabulary:start_practice' pk=topic.pk %}" style="margin:0">
+      {% csrf_token %}
+      <input type="hidden" name="exercise_type" value="{{ start_type }}">
+      <button class="btn" type="submit">Bắt đầu luyện tập &rarr;</button>
+    </form>
+  {% else %}
+    <span class="help" style="align-self:center">Chưa đủ dữ liệu để bắt đầu luyện tập.</span>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      var u = new SpeechSynthesisUtterance(text); u.lang = 'en-US';
+      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-say]');
+    if (!b) return;
+    e.stopPropagation();
+    var audio = b.getAttribute('data-audio'), word = b.getAttribute('data-say');
+    if (audio) { new Audio(audio).play().catch(function () { speak(word); }); } else { speak(word); }
+  }, true);
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.fcard'));
+  if (!cards.length) return;
+  var i = 0, flipped = false, count = document.getElementById('fc-count');
+  function show() {
+    cards.forEach(function (c, k) { c.hidden = (k !== i); });
+    var c = cards[i];
+    c.querySelector('.front').hidden = flipped;
+    c.querySelector('.back').hidden = !flipped;
+    count.textContent = (i + 1) + ' / ' + cards.length;
+  }
+  cards.forEach(function (c) {
+    c.addEventListener('click', function () { flipped = !flipped; show(); });
+    c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flipped = !flipped; show(); } });
+  });
+  document.getElementById('fc-prev').addEventListener('click', function () { i = (i - 1 + cards.length) % cards.length; flipped = false; show(); });
+  document.getElementById('fc-next').addEventListener('click', function () { i = (i + 1) % cards.length; flipped = false; show(); });
+  show();
+})();
+</script>
+{% endblock %}

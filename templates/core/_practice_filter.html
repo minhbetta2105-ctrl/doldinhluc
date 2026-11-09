@@ -1,0 +1,32 @@
+{# Reusable search/filter toolbar for all IELTS practice modules. Each view supplies the options. #}
+<form method="get" action="{{ filter_url }}" class="practice-filter-bar" role="search" aria-label="Tìm kiếm và lọc bài luyện">
+  <label class="practice-filter-field practice-filter-query"><span class="practice-filter-label">Tìm kiếm</span>
+    <input type="search" name="q" value="{{ query }}" {% if filter_query_datalist %}list="topic-search-options"{% endif %} placeholder="{{ filter_search_placeholder|default:'Nhập tên bài hoặc từ khóa...' }}" aria-label="Tìm kiếm bài luyện">
+  </label>
+  {% if filter_query_datalist %}<datalist id="topic-search-options">{% for topic in available_topics %}<option value="{{ topic }}"></option>{% endfor %}</datalist>{% endif %}
+  {% if filter_show_topic %}
+  <label class="practice-filter-field"><span class="practice-filter-label">Chủ đề</span>
+    <input type="search" name="topic" list="topic-options" value="{{ selected_topic }}" placeholder="Chọn hoặc nhập chủ đề" autocomplete="off">
+    <datalist id="topic-options">{% for topic in available_topics %}<option value="{{ topic }}"></option>{% endfor %}</datalist>
+  </label>
+  {% endif %}
+  {% if filter_type_name %}
+  <label class="practice-filter-field"><span class="practice-filter-label">{{ filter_type_label|default:'Dạng bài' }}</span>
+    <select name="{{ filter_type_name }}"><option value="">Tất cả</option>{% for code,label in filter_type_choices %}<option value="{{ code }}" {% if filter_type_value == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  <label class="practice-filter-field"><span class="practice-filter-label">Trình độ</span>
+    <select name="level"><option value="">Tất cả trình độ</option>{% for code,label in level_choices %}<option value="{{ code }}" {% if selected_level == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  </label>
+  {% if filter_show_status %}
+  <label class="practice-filter-field"><span class="practice-filter-label">Luyện tập</span>
+    <select name="status"><option value="">Tất cả</option><option value="done" {% if selected_status == 'done' %}selected{% endif %}>Đã làm</option><option value="not_done" {% if selected_status == 'not_done' %}selected{% endif %}>Chưa làm</option></select>
+  </label>
+  {% endif %}
+  {% if filter_show_sort %}
+  <label class="practice-filter-field"><span class="practice-filter-label">Sắp xếp</span>
+    <select name="sort"><option value="newest" {% if sort_option != 'oldest' %}selected{% endif %}>Mới nhất</option><option value="oldest" {% if sort_option == 'oldest' %}selected{% endif %}>Cũ nhất</option></select>
+  </label>
+  {% endif %}
+  <div class="practice-filter-actions"><button type="submit" class="btn btn-primary">Lọc bài</button><a class="btn btn-outline" href="{{ filter_url }}">Đặt lại</a></div>
+</form>
